@@ -1,0 +1,110 @@
+from contextlib import asynccontextmanager
+
+import redis
+from fastapi import FastAPI
+from fastapi.security import OAuth2PasswordBearer
+from redis import AuthenticationError, RedisError
+
+# 导入公共环境配置
+from core.framework.cache_tools import cache
+from core.framework.logger import logger
+from core.framework.tools import import_modules_async
+from core.framework.scheduler_tools import job_scheduler
+
+"""安全警告: 不要在生产中打开调试运行!"""
+
+DEBUG = True
+
+"""
+引入环境配置
+"""
+if DEBUG:
+    from config.dev import *
+else:
+    from config.prod import *
+
+SECRET_KEY = "09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3e7"
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
+"""
+跨域解决
+详细解释：https://cloud.tencent.com/developer/article/1886114
+官方文档：https://fastapi.tiangolo.com/tutorial/cors/
+"""
+# 是否启用跨域
+CORS_ORIGIN_ENABLE = True
+# 只允许访问的域名列表，* 代表所有
+ALLOW_ORIGINS = ["*"]
+# 是否支持携带 cookie
+ALLOW_CREDENTIALS = True
+# 设置允许跨域的http方法，比如 get、post、put等。
+ALLOW_METHODS = ["*"]
+# 允许携带的headers，可以用来鉴别来源等作用。
+ALLOW_HEADERS = ["*"]
+
+EVENTS = [
+    "config.settings.connect_redis" if REDIS_DB_ENABLE else None,
+    "config.settings.run_apscheduler" if APSCHEDULER_ENABLE else None,
+]
+
+@asynccontextmanager # 装饰器将生成器函数转换为异步上下文管理器
+async def lifespan(app: FastAPI):
+    # 应用程序启动时执行
+    await import_modules_async(EVENTS, "全局事件", app=app, status=True)
+    # yield 之前：进入上下文时执行的代码（设置/初始化）
+    # yield 之后：退出上下文时执行的代码（清理/关闭）
+    yield
+
+    # 应用程序关闭时执行
+    await import_modules_async(EVENTS, "全局事件", app=app, status=False)
+
+# 连接redis
+async def connect_redis(app: FastAPI, status: bool):
+    """
+    连接redis
+    :param app:
+    :param status:
+    :return:
+    """
+    if status:
+        logger.info("连接Redis")
+        rd = redis.asyncio.Redis(**REDIS_DB_CONFIG) #aioredis.from_url(REDIS_DB_URL, decode_responses=True, health_check_interval=1, db=1)
+        app.state.redis = rd
+        try:
+            response = await rd.ping()
+            if response:
+                print("Redis 连接成功")
+                cache.init_redis(app.state.redis)
+            else:
+                print("Redis 连接失败")
+        except AuthenticationError as e:
+            raise AuthenticationError(f"Redis 连接认证失败，用户名或密码错误: {e}")
+        except TimeoutError as e:
+            raise TimeoutError(f"Redis 连接超时，地址或者端口错误: {e}")
+        except RedisError as e:
+            raise RedisError(f"Redis 连接失败: {e}")
+    else:
+        print("Redis 连接关闭")
+        try:
+            if app.state.redis:
+                await app.state.redis.connection_pool.disconnect()
+                await cache.get_redis_connect().close()
+        except Exception as e:
+            print("关闭Redis连接异常")
+            logger.error(f"关闭Redis连接异常: {e}")
+
+# 运行 apschedule 定时任务
+async def run_apscheduler(app: FastAPI, status: bool):
+    if status:
+        print("启动apschedule任务调度")
+        logger.info("启动apschedule任务调度")
+        job_scheduler.init_scheduler(APSCHEDULER_DATABASE_URL)
+    else:
+        try:
+            print("关闭apschedule任务调度")
+            job_scheduler.shutdown()
+        except Exception as e:
+            print("关闭apschedule任务调度失败")
+            logger.error(f"关闭apschedule任务调度失败: {e}")

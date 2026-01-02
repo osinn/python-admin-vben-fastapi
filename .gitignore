@@ -1,0 +1,13 @@
+# created by virtualenv automatically
+.venv
+.DS_Store
+._*
+
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+logs
+### VS Code ###
+.vscode/
