@@ -1,12 +1,14 @@
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends, APIRouter
 from pydantic import BaseModel, Field
 
 import uvicorn
 from starlette.middleware.cors import CORSMiddleware
 
 from apps.app_router import app_router
+from apps.modules.sys.basis.routers.ignoring_router import ignor_router
 from config import settings
+from core.framework.auth import AuthAuthorize
 from core.framework.exception import register_exception
 
 
@@ -19,7 +21,18 @@ app = FastAPI(
     lifespan=settings.lifespan
 )
 
-app.include_router(app_router)
+# 公共（无需登录）的路由
+public_router = APIRouter()
+public_router.include_router(ignor_router)
+
+# 需登录的路由（统一加依赖）
+auth_authorize_router = APIRouter(dependencies=[Depends(AuthAuthorize())]) # 全局注入所有路由自动应用此依赖登录认证
+auth_authorize_router.include_router(app_router)
+
+# 分别挂载
+app.include_router(public_router)          # 无认证
+app.include_router(auth_authorize_router)  # 有认证
+
 
 # 全局异常捕捉处理
 register_exception(app)

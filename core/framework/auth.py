@@ -7,7 +7,7 @@ from pwdlib import PasswordHash
 from annotated_doc import Doc
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from apps.entity.UserEntity import UserEntity
+from apps.modules.sys.basis.models.sys_user import SysUserModel
 from config import settings
 from core.framework.database import db_getter
 
@@ -15,7 +15,7 @@ from typing import Annotated, Any
 
 import jwt
 from jwt import InvalidTokenError
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from config.settings import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
 from core.utils.JSONUtils import JSONUtils
@@ -31,31 +31,18 @@ class Token(BaseModel):
     class Config:
         # 接收任意类型
         arbitrary_types_allowed = True
-class LoginRequestParam:
-
-    def __init__(
-        self,
-        account: Annotated[
-            str,
-            Body(),
-            Doc(
-                """
-                `account` 登录账号
-                """
-            ),
-        ],
-        password: Annotated[
-            str,
-            Body(json_schema_extra={"format": "password"}),
-            Doc(
-                """
-                `password` 登录密码
-                """
-            ),
-        ],
-    ):
-        self.account = account
-        self.password = password
+class LoginRequestParam(BaseModel):
+    account: str = Field(
+        ...,
+        description="`account` 登录账号",
+        examples=["user123"]
+    )
+    password: str = Field(
+        ...,
+        description="`password` 登录密码",
+        json_schema_extra={"format": "password"},
+        examples=["secret123"]
+    )
 
 class AuthValidation:
 
@@ -68,7 +55,7 @@ class AuthValidation:
         return password_hash.hash(password)
 
     @classmethod
-    async def create_access_token(cls, data: any, expires_delta: timedelta | None = None):
+    async def create_access_token(cls, data: Any, expires_delta: timedelta | None = None):
         to_encode = data.copy()
         to_encode.pop('user', None)
         if expires_delta:
@@ -79,10 +66,6 @@ class AuthValidation:
         encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
         await cache.set(data.get("sub"), JSONUtils.dumps(data.get("user").__dict__, exclude_fields=["password"]))
         return encoded_jwt
-
-    @classmethod
-    def get_user_permissions(cls) -> set:
-        print('获取用户权限')
 
     @classmethod
     async def validate_token(cls, token: str, permissions: set[str] | None = None):
@@ -145,13 +128,13 @@ class Auth(BaseModel):
 class LoginAuth(AuthValidation):
 
     async def __call__(self, request: Request,
-                       login_request_param: LoginRequestParam = Depends(LoginRequestParam),
+                       login_request_param: LoginRequestParam = Body(),
                        db: AsyncSession = Depends(db_getter)) -> Token:
         print("登录", login_request_param)
 
-        user = await SQLAlchemyHelper.execute_first_model(db, UserEntity,
-                                                          "select * from tbl_user where name = :name",
-                                                          {"name": login_request_param.account}
+        user = await SQLAlchemyHelper.execute_first_model(db, SysUserModel,
+                                                          "select * from tbl_sys_user where name = :name",
+                                                          {"account": login_request_param.account}
                                                           )
         if not user:
             raise HTTPException(

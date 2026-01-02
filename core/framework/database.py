@@ -93,7 +93,7 @@ class BaseEntity(Base):
     )
     updated_by: Mapped[int] = mapped_column(BIGINT, comment='更新人ID')
     # bool 对应MySQL类型tinyint(1)
-    is_deleted: Mapped[bool] = mapped_column(Boolean, default=False, comment="是否软删除")
+    is_deleted: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false", comment="是否软删除")
 
     @classmethod
     def get_column_attrs(cls) -> list:
