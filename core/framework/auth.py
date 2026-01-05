@@ -64,7 +64,9 @@ class AuthValidation:
             expire = datetime.now(timezone.utc) + timedelta(minutes=15)
         to_encode.update({"exp": expire})
         encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-        await cache.set(data.get("sub"), JSONUtils.dumps(data.get("user").__dict__, exclude_fields=["password"]))
+        user_dict = data.get("user").__dict__
+        user_dict.pop("password")
+        await cache.set(data.get("sub"), JSONUtils.dumps(user_dict))
         return encoded_jwt
 
     @classmethod
@@ -72,7 +74,7 @@ class AuthValidation:
         print("验证token")
         credentials_exception = HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Could not validate credentials",
+            detail="登录超时，请重新登录",
             headers={"WWW-Authenticate": "Bearer"},
         )
         try:
@@ -133,7 +135,7 @@ class LoginAuth(AuthValidation):
         print("登录", login_request_param)
 
         user = await SQLAlchemyHelper.execute_first_model(db, SysUserModel,
-                                                          "select * from tbl_sys_user where name = :name",
+                                                          "select * from tbl_sys_user where account = :account",
                                                           {"account": login_request_param.account}
                                                           )
         if not user:

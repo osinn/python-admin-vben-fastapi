@@ -3,7 +3,7 @@
 分页
 """
 from datetime import datetime
-from typing import List
+from typing import List, Optional
 
 from pydantic import BaseModel, Field
 
@@ -24,8 +24,10 @@ class BaseSchema(BaseModel):
     id: int = Field(default=0, description="唯一ID")
     created_time: datetime = Field(description='创建时间 yyyy-MM-dd HH:mm:ss')
     created_by: int = Field(description='创建人ID')
-    updated_time: datetime= Field(description='更新时间 yyyy-MM-dd HH:mm:ss')
-    updated_by: int = Field(description='更新人ID')
+    # 允许为空
+    updated_time: Optional[datetime] = Field(description='更新时间 yyyy-MM-dd HH:mm:ss')
+    # 允许为空
+    updated_by: Optional[int] = Field(description='更新人ID')
 
     class Config:
         from_attributes = True  # SQLAlchemy 2.0+ 用这个（替代旧版的 orm_mode=True）

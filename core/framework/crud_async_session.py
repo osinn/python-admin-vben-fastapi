@@ -27,6 +27,8 @@ class AsyncGenericCRUD:
 
     async def create(self, obj_in: BaseModel) -> object:
         obj_data = obj_in.model_dump()
+        obj_data["created_by"] = 1
+        # obj_data.update({"created_by": 30, "country": "China"})
         db_obj = self.model_class(**obj_data)
         self.db.add(db_obj)
         await self.db.flush()

@@ -83,7 +83,9 @@ class BaseEntity(Base):
     __abstract__ = True
 
     id:  Mapped[int] = mapped_column(BIGINT, primary_key=True, comment='主键ID')
-    created_time: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), comment='创建时间')
+    created_time: Mapped[datetime] = mapped_column(DateTime,
+                                                   default=func.now(), # 新增时添加默认值
+                                                   server_default=func.now(), comment='创建时间')
     created_by: Mapped[int] = mapped_column(BIGINT, comment='创建人ID')
     updated_time: Mapped[datetime] = mapped_column(
         DateTime,

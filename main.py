@@ -6,7 +6,7 @@ import uvicorn
 from starlette.middleware.cors import CORSMiddleware
 
 from apps.app_router import app_router
-from apps.modules.sys.basis.routers.ignoring_router import ignor_router
+from apps.modules.sys.basis.routers.ignoring_router import ignore_router
 from config import settings
 from core.framework.auth import AuthAuthorize
 from core.framework.exception import register_exception
@@ -23,7 +23,7 @@ app = FastAPI(
 
 # 公共（无需登录）的路由
 public_router = APIRouter()
-public_router.include_router(ignor_router)
+public_router.include_router(ignore_router)
 
 # 需登录的路由（统一加依赖）
 auth_authorize_router = APIRouter(dependencies=[Depends(AuthAuthorize())]) # 全局注入所有路由自动应用此依赖登录认证
