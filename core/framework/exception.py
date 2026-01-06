@@ -5,11 +5,26 @@ from starlette import status
 from fastapi import Request
 from fastapi.encoders import jsonable_encoder
 from fastapi import FastAPI
-from core.framework.logger import logger
+from core.framework.log_tools import logger
 from config.settings import DEBUG
 
 
 class BizException(Exception):
+
+    def __init__(
+            self,
+            msg: str,
+            code: int = status.HTTP_400_BAD_REQUEST,
+            status_code: int = status.HTTP_200_OK,
+            desc: str = None,
+            error: str = None
+    ):
+        self.msg = msg
+        self.code = code
+        self.status_code = status_code
+        self.desc = desc
+        self.error = error
+class SqlException(Exception):
 
     def __init__(
             self,

@@ -9,13 +9,13 @@ from pydantic import BaseModel, Field
 
 
 class PageVo(BaseModel):
-    total: int = Field(description="总数",strict=False)
+    total: int = Field(description="总数")
     data:list = Field(description="分页数据")
 
     def __init__(self, total: int, data: List = None):
+        super().__init__(total=total, data=data)
         self.total = total
         self.data = data
-        super().__init__(total=total, data=data)
     class Config:
         arbitrary_types_allowed = True
 

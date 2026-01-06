@@ -7,7 +7,7 @@ from redis import AuthenticationError, RedisError
 
 # 导入公共环境配置
 from core.framework.cache_tools import cache
-from core.framework.logger import logger
+from core.framework.log_tools import logger
 from core.framework.tools import import_modules_async
 from core.framework.scheduler_tools import job_scheduler
 

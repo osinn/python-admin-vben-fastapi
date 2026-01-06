@@ -1,4 +1,4 @@
-from core.framework.logger import logger
+from core.framework.log_tools import logger
 from typing import Any, Dict, List, Optional, TypeVar, Type
 
 from sqlalchemy import text, select, and_, func
@@ -157,12 +157,11 @@ class SQLAlchemyHelper:
         filter_conditions = []
         if filters:
             for key, value in filters.items():
-                if not hasattr(model_class, key):
-                    logger.info(f"Model {model_class.__name__} has no attribute '{key}'")
-                    raise BizException("数据查询异常")
+                if not hasattr(model_class, key) or not value:
+                    continue
                 column = getattr(model_class, key)
                 filter_conditions.append(column == value)
-            stmt = stmt.where(and_(*filter_conditions))
+            stmt = stmt.where(and_(*filter_conditions).like(""))
         # 添加排序
         if order_by:
             stmt = stmt.order_by(*order_by)
@@ -180,8 +179,8 @@ class SQLAlchemyHelper:
             model_class: Type[T],
             filters: Optional[Dict[str, Any]] = None,
             order_by: Optional[List] = None,
-            limit: int = 10,
-            offset: int = 1,
+            page_size: int = 10,
+            page_num: int = 1,
             v_schema: Any = None
     ) -> PageVo:
         """
@@ -191,8 +190,8 @@ class SQLAlchemyHelper:
         :param model_class: 要查询的模型类，如 User
         :param filters: 过滤条件，字典形式，如 {"name": "Alice", "age": 30}
         :param order_by: 排序字段列表，如 [User.created_at.desc()]
-        :param limit: 限制返回数量
-        :param offset: 跳过记录数（用于分页）
+        :param page_size: 限制返回数量
+        :param page_num: 跳过记录数（用于分页）
         :param v_schema: 指定使用的序列化对象
         :return: 查询结果列表（模型对象列表）
         """
@@ -202,9 +201,8 @@ class SQLAlchemyHelper:
         filter_conditions = []
         if filters:
             for key, value in filters.items():
-                if not hasattr(model_class, key):
-                    logger.info(f"Model {model_class.__name__} has no attribute '{key}'")
-                    raise BizException("数据查询异常")
+                if not hasattr(model_class, key) or not value:
+                    continue
                 column = getattr(model_class, key)
                 filter_conditions.append(column == value)
             stmt = stmt.where(and_(*filter_conditions))
@@ -220,13 +218,13 @@ class SQLAlchemyHelper:
         if order_by:
             stmt = stmt.order_by(*order_by)
 
-        if offset < 1:
-            offset = 1
-        if offset < 1:
-            limit = 10
+        if page_num < 1:
+            page_num = 1
+        if page_num < 1:
+            page_size = 10
 
-        offset = (offset - 1) * limit
-        stmt.offset(offset).limit(limit)
+        page_num = (page_num - 1) * page_size
+        stmt.offset(page_num).limit(page_size)
 
         result = await session.execute(stmt)
         rows = result.scalars().all()

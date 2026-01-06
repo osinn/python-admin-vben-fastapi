@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from apps.modules.sys.basis.models.sys_user import SysUserModel
 from config import settings
+from core.framework.log_tools import logger
 from core.framework.database import db_getter
 
 from typing import Annotated, Any
@@ -61,7 +62,7 @@ class AuthValidation:
         if expires_delta:
             expire = datetime.now(timezone.utc) + expires_delta
         else:
-            expire = datetime.now(timezone.utc) + timedelta(minutes=15)
+            expire = datetime.now(timezone.utc) + timedelta(hours=24)
         to_encode.update({"exp": expire})
         encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
         user_dict = data.get("user").__dict__
@@ -70,7 +71,7 @@ class AuthValidation:
         return encoded_jwt
 
     @classmethod
-    async def validate_token(cls, token: str, permissions: set[str] | None = None):
+    async def validate_token(cls, token: str,):
         print("验证token")
         credentials_exception = HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -90,13 +91,6 @@ class AuthValidation:
             user = JSONUtils.loads(cache_user_info)
         if user is None:
             raise credentials_exception
-
-        print("验证用户权限", permissions)
-        if permissions:
-            print("校验")
-            # 用户权限验证
-            user_permissions = user.get("permissions")
-            await cls.validate_permissions(permissions, set(user_permissions) if user_permissions else None )
         return user
 
     @classmethod
@@ -164,6 +158,22 @@ class AuthAuthorize(AuthValidation):
     1、token 登录认证
     2、用户 权限验证
     """
+    async def __call__(self, request: Request,
+                       token: str = Depends(settings.oauth2_scheme),
+                       db: AsyncSession = Depends(db_getter)) -> Auth:
+        print("进行接口权限校验")
+
+        # token 登录认证
+        user = await self.validate_token(token)
+        request.state.user = user
+        auth = Auth(user=user, db=db)
+        return auth
+
+class PreAuthorize(AuthValidation):
+    """
+    1、token 登录认证
+    2、用户 权限验证
+    """
 
     def __init__(self, permissions: list[str] | None = None):
         print("接口需要的权限")
@@ -173,12 +183,22 @@ class AuthAuthorize(AuthValidation):
             self.permissions = None
 
     async def __call__(self, request: Request,
-                       token: str = Depends(settings.oauth2_scheme),
-                       db: AsyncSession = Depends(db_getter)) -> Auth:
+                       db: AsyncSession = Depends(db_getter)) -> None:
         print("进行接口权限校验")
+        user = getattr(request.state, "user", None)
 
-        # token 登录认证
-        user = await self.validate_token(token, self.permissions)
-
-        auth = Auth(user=user, db=db)
-        return auth
+        if not user:
+            logger.error("权限认证-用户不存在")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+            )
+        if self.permissions:
+            print("验证用户权限", self.permissions)
+            # if permissions:
+            #     print("校验")
+            #     # 用户权限验证
+            #     user_permissions = user.get("permissions")
+            #     await cls.validate_permissions(permissions, set(user_permissions) if user_permissions else None )
+            #
+            # auth = Auth(user=user, db=db)
+        return None

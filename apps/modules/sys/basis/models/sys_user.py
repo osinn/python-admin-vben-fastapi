@@ -6,6 +6,9 @@ from datetime import datetime
 
 
 class SysUserModel(BaseEntity):
+    """
+    用户表
+    """
     __tablename__ = "tbl_sys_user"
 
     account: Mapped[str] = mapped_column(String(128), comment="账号")

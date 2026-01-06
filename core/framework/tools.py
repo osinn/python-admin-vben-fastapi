@@ -1,6 +1,6 @@
 import importlib
 
-from core.framework.logger import logger
+from core.framework.log_tools import logger
 
 async def import_modules_async(modules: list, desc: str, **kwargs):
     """
