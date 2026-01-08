@@ -1,12 +1,13 @@
-from typing import Type, Optional, List
+import re
+from typing import Type, Optional, List, Any
 
 from fastapi import Request, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, text, func, BinaryExpression
+from sqlalchemy import select, text
 from pydantic import BaseModel
 
+from core.framework.common_schemas import PageVo
 from core.framework.database import db_getter
-from core.framework.exception import SqlException
 
 
 class AsyncGenericCRUD:
@@ -18,7 +19,8 @@ class AsyncGenericCRUD:
     async def first_model(
             self,
             sql: str,
-            params: dict = None
+            params: dict = None,
+            model_class: Type = None,
     ) -> Optional[object]:
         """
         执行SQL查询返回第一个模型对象
@@ -27,15 +29,50 @@ class AsyncGenericCRUD:
         :return:
         """
         result = await self.db.execute(text(sql), params or {})
-        return result.scalar_one_or_none()
+        if model_class:
+            row = result.mappings().first()
+            return model_class(**row) if row else None
+        else:
+            return result.scalar_one_or_none()
 
     async def list_model(
             self,
             sql: str,
             params: dict = None
+    ) -> list:
+        """
+        执行SQL查询返回第一个模型对象
+        sql 动态参数判断
+            sql = (f"select * from tbl_sys_user where is_deleted = 0"
+                    f"{" and status =: status" if sys_user_page_param.status else ''}" # 如果 status 不为空则参与查询
+                    f"{" and name =: search_key" if sys_user_page_param.search_key else ''}" # 如果 search_key 不为空则参与查询
+                )
+        :param sql: 执行SQL
+        :param params: 查询参数
+        :return: 返回一个行字典集合
+        """
+        """
+        添加过滤条件
+        :param sql:
+        :param kwargs: 关键词参数
+        """
+        result = await self.db.execute(text(sql), params or {})
+        rows = result.fetchall()
+        return [dict(row._mapping) for row in rows]
+
+    async def page_select_model(
+            self,
+            sql: str,
+            params: dict = None,
+            v_schema: Any = None
     ) -> Optional[object]:
         """
         执行SQL查询返回第一个模型对象
+        sql 动态参数判断
+            sql = (f"select * from tbl_sys_user where is_deleted = 0"
+                    f"{" and status =: status" if sys_user_page_param.status else ''}" # 如果 status 不为空则参与查询
+                    f"{" and name =: search_key" if sys_user_page_param.search_key else ''}" # 如果 search_key 不为空则参与查询
+                )
         :param sql: 执行SQL
         :param params: 查询参数
         :return:
@@ -44,9 +81,28 @@ class AsyncGenericCRUD:
         添加过滤条件
         :param sql:
         :param kwargs: 关键词参数
+        :param v_schema: 序列化对象
         """
+        count_sql = re.sub(
+            r'^\s*SELECT\s+.*?\s+FROM\s',
+            'SELECT COUNT(1) FROM ',
+            sql,
+            flags=re.IGNORECASE | re.DOTALL
+        )
+
+        count_sql = re.split(r'\s+ORDER\s+BY\s', count_sql, flags=re.IGNORECASE)[0]
+
+        count_sql = re.split(r'\s+(LIMIT|OFFSET)\s', count_sql, flags=re.IGNORECASE)[0].strip()
+
+        count_result = await self.db.execute(text(count_sql), params or {})
+        total = count_result.scalar_one()
         result = await self.db.execute(text(sql), params or {})
-        return result.fetchall()
+        rows = result.fetchall()
+
+        if rows and v_schema:
+            return PageVo(total, [v_schema.model_validate(obj).model_dump() for obj in rows])
+        else:
+            return PageVo(total, list(rows) if rows else [])
 
     async def get(self, id: int) -> Optional[object]:
         result = await self.db.execute(
@@ -99,50 +155,6 @@ class AsyncGenericCRUD:
             return False
         await self.db.delete(db_obj)
         return True
-    def __dict_filter(self, **kwargs) -> list[BinaryExpression]:
-        """
-        字典过滤
-        :param model:
-        :param kwargs:
-        """
-        conditions = []
-        for field, value in kwargs.items():
-            if value is not None and value != "":
-                attr = getattr(self.model, field)
-                if isinstance(value, tuple):
-                    if len(value) == 1:
-                        if value[0] == "None":
-                            conditions.append(attr.is_(None))
-                        elif value[0] == "not None":
-                            conditions.append(attr.isnot(None))
-                        else:
-                            raise SqlException("SQL查询语法错误")
-                    elif len(value) == 2 and value[1] not in [None, [], ""]:
-                        if value[0] == "date":
-                            # 根据日期查询， 关键函数是：func.time_format和func.date_format
-                            conditions.append(func.date_format(attr, "%Y-%m-%d") == value[1])
-                        elif value[0] == "like":
-                            conditions.append(attr.like(f"%{value[1]}%"))
-                        elif value[0] == "in":
-                            conditions.append(attr.in_(value[1]))
-                        elif value[0] == "between" and len(value[1]) == 2:
-                            conditions.append(attr.between(value[1][0], value[1][1]))
-                        elif value[0] == "month":
-                            conditions.append(func.date_format(attr, "%Y-%m") == value[1])
-                        elif value[0] == "!=":
-                            conditions.append(attr != value[1])
-                        elif value[0] == ">":
-                            conditions.append(attr > value[1])
-                        elif value[0] == ">=":
-                            conditions.append(attr >= value[1])
-                        elif value[0] == "<=":
-                            conditions.append(attr <= value[1])
-                        else:
-                            raise SqlException("SQL查询语法错误")
-                else:
-                    conditions.append(attr == value)
-        return conditions
-
 
 def crud_getter(model_class: Type):
     """

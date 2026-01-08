@@ -10,7 +10,7 @@ from jinja2 import Template
 
 # ==================== 配置区 ====================
 DATABASE_URL = "mysql+pymysql://root:osinn123321@192.168.1.50:3306/osinn_vben?charset=utf8"
-DEFAULT_TABLE_NAME = "tbl_sys_user,tbl_role"
+DEFAULT_TABLE_NAME = "tbl_sys_menu"
 OUTPUT_PREFIX_REMOVE = "tbl_"
 USE_MYSQL_BIGINT = True  # 设为 True 则 BIGINT 用 mysql.BIGINT
 # =================================================
@@ -24,10 +24,30 @@ from sqlalchemy.orm import Mapped, mapped_column
 from datetime import {% if need_datetime %}datetime{% endif %}{% if need_date %}{% if need_datetime %}, {% endif %}date{% endif %}{% if need_time %}{% if need_datetime or need_date %}, {% endif %}time{% endif %}
 {% endif %}
 
+{% set skip_fields = ['id', 'created_by', 'created_time', 'updated_by', 'updated_time'] %}
+
 class {{ class_name }}(BaseEntity):
     __tablename__ = "{{ table_name }}"
 {% for col in columns %}
+    {%- if col.name not in skip_fields %}
     {{ col.name }}: Mapped[{% if col.py_type == 'str' %}str{% elif col.py_type == 'int' %}int{% elif col.py_type == 'bool' %}bool{% elif col.py_type == 'float' %}float{% elif col.py_type == 'datetime' %}datetime{% elif col.py_type == 'date' %}date{% elif col.py_type == 'time' %}time{% elif col.py_type == 'bytes' %}bytes{% elif col.py_type == 'dict' %}dict{% else %}Optional[{{ col.py_type }}]{% endif %}] = mapped_column({{ col.sql_type }}{% if col.primary_key %}, primary_key=True{% endif %}{% if not col.nullable %}, nullable=False{% endif %}{% if col.comment %}, comment="{{ col.comment|e }}"{% endif %})
+    {%- endif %}
+{%- endfor %}
+'''
+SCHEMA_TEMPLATE = '''from typing import Optional
+from pydantic import Field
+from core.framework.common_schemas import BaseSchema
+{% if need_datetime or need_date or need_time %}
+from datetime import {% if need_datetime %}datetime{% endif %}{% if need_date %}{% if need_datetime %}, {% endif %}date{% endif %}{% if need_time %}{% if need_datetime or need_date %}, {% endif %}time{% endif %}
+{% endif %}
+
+{% set skip_fields = ['id', 'created_by', 'created_time', 'updated_by', 'updated_time'] %}
+
+class {{ class_name }}Schema(BaseSchema):
+{% for col in columns %}
+    {%- if col.name not in skip_fields %}
+    {{ col.name }}: Optional[{% if col.py_type == 'str' %}str{% elif col.py_type == 'int' %}int{% elif col.py_type == 'bool' %}bool{% elif col.py_type == 'float' %}float{% elif col.py_type == 'datetime' %}datetime{% elif col.py_type == 'date' %}date{% elif col.py_type == 'time' %}time{% elif col.py_type == 'bytes' %}bytes{% elif col.py_type == 'dict' %}dict{% else %}Optional[{{ col.py_type }}]{% endif %}] = Field(default=None{% if col.comment %}, description="{{ col.comment|e }}"{% endif %})
+    {%- endif %}
 {%- endfor %}
 '''
 
@@ -119,6 +139,8 @@ def map_to_python_type(col_type_obj):
     else:
         return 'str'
 
+def generate_schema_code():
+    print('')
 
 def generate_model_code(table_name: str, engine):
     inspector = Inspector.from_engine(engine)
@@ -200,7 +222,28 @@ def generate_model_code(table_name: str, engine):
         need_date=need_date,
         need_time=need_time
     )
-    return code
+
+    output_base = table_name[len(OUTPUT_PREFIX_REMOVE):] if table_name.startswith(OUTPUT_PREFIX_REMOVE) else table_name
+    output_file = os.path.join(os.getcwd(), f"{output_base}.py")  # f"./{output_base}.py"
+
+    with open(output_file, "w", encoding="utf-8") as f:
+        f.write(code)
+    print(f"✅ model已生成：{output_file}")
+
+    schema_template = Template(SCHEMA_TEMPLATE.strip())
+    schema_code = schema_template.render(
+        class_name=class_name,
+        columns=columns,
+        need_datetime=need_datetime,
+        need_date=need_date,
+        need_time=need_time
+    )
+    output_base = table_name[len(OUTPUT_PREFIX_REMOVE):] if table_name.startswith(OUTPUT_PREFIX_REMOVE) else table_name
+    output_file = os.path.join(os.getcwd(), f"{output_base}_schema.py")  # f"./{output_base}.py"
+
+    with open(output_file, "w", encoding="utf-8") as f:
+        f.write(schema_code)
+    print(f"✅ schema已生成：{output_file}")
 
 
 def main():
@@ -210,13 +253,8 @@ def main():
     try:
         table_names = DEFAULT_TABLE_NAME.split(",")
         for table_name in table_names:
-            code = generate_model_code(table_name, engine)
-            output_base = table_name[len(OUTPUT_PREFIX_REMOVE):] if table_name.startswith(OUTPUT_PREFIX_REMOVE) else table_name
-            output_file = os.path.join(os.getcwd(), f"{output_base}.py") # f"./{output_base}.py"
+            generate_model_code(table_name, engine)
 
-            with open(output_file, "w", encoding="utf-8") as f:
-                f.write(code)
-            print(f"✅ 模型已生成：{output_file}")
     except Exception as e:
         print(f"❌ 生成失败：{e}")
         raise

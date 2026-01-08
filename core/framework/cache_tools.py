@@ -21,10 +21,20 @@ class Cache:
         return self.redis_connect
 
     async def set(self, key: str, value: str, ex: int = None):
+        """
+        设置缓存
+        :param key: key值
+        :param value:  缓存值
+        :param ex: 过期时间,单位毫秒
+        :return:
+        """
         await self.redis_connect.set(key, value, ex=ex)
 
     async def get(self, key: str) -> Any:
         return await self.redis_connect.get(key)
+
+    async def delete(self, key: str) -> Any:
+        return await self.redis_connect.delete(key)
 
 # 全局实例
 cache = Cache()

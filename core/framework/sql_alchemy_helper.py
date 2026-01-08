@@ -231,7 +231,7 @@ class SQLAlchemyHelper:
         if rows and v_schema:
             return PageVo(total, [v_schema.model_validate(obj).model_dump() for obj in rows])
         else:
-            return PageVo(total, rows)
+            return PageVo(total, list(rows))
 
 
 """

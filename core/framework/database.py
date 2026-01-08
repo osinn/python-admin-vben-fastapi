@@ -14,6 +14,7 @@ from fastapi import Request
 from core.framework.exception import BizException
 from datetime import datetime
 
+from core.utils.Snowflake import snowflake
 
 # 官方文档：https://docs.sqlalchemy.org/en/20/orm/extensions/asyncio.html#sqlalchemy.ext.asyncio.create_async_engine
 
@@ -76,13 +77,17 @@ class Base(AsyncAttrs, DeclarativeBase):
             table_name = "".join(ls).lower()
         return table_name
 
+
 class BaseEntity(Base):
     """
     公共 ORM 模型，基表
     """
     __abstract__ = True
 
-    id:  Mapped[int] = mapped_column(BIGINT, primary_key=True, comment='主键ID')
+    id:  Mapped[int] = mapped_column(BIGINT, primary_key=True, comment='主键ID',
+                                     default=lambda: str(snowflake.generate_id()),
+                                     server_default=str(snowflake.generate_id()),
+                                     )
     created_time: Mapped[datetime] = mapped_column(DateTime,
                                                    default=func.now(), # 新增时添加默认值
                                                    server_default=func.now(), comment='创建时间')

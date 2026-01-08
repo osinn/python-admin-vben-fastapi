@@ -1,6 +1,6 @@
 from core.framework.database import BaseEntity
 from sqlalchemy.orm import Mapped, mapped_column
-from sqlalchemy import Boolean, DateTime, Integer, String
+from sqlalchemy import Boolean, DateTime, Integer, String, BIGINT
 
 from datetime import datetime
 
@@ -21,7 +21,7 @@ class SysUserModel(BaseEntity):
     staff_number: Mapped[str] = mapped_column(String(32), comment="工号")
     birthday: Mapped[datetime] = mapped_column(DateTime, comment="生日")
     sex: Mapped[int] = mapped_column(Integer, comment="性别 1-男；2-女；3未知")
-    dept_id: Mapped[str] = mapped_column(String(32), comment="部门ID")
+    dept_id: Mapped[int] = mapped_column(BIGINT, comment="部门ID")
     lock_account: Mapped[int] = mapped_column(Integer, nullable=False, comment="锁定标记 0正常；1锁定", server_default="0")
     sort: Mapped[int] = mapped_column(Integer, nullable=False, comment="排序", server_default="0")
     remarks: Mapped[str] = mapped_column(String(512), comment="备注")

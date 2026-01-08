@@ -1,6 +1,6 @@
 from typing import Optional
 from datetime import datetime
-from pydantic import BaseModel, Field
+from pydantic import Field, BaseModel
 
 from core.framework.common_schemas import BaseSchema
 
@@ -22,3 +22,18 @@ class SysUserSchema(BaseSchema):
     remarks: Optional[str] = Field(default=None, description="备注")
     status: int = Field(default=0, description="状态 0正常；1停用")
     is_default: bool = Field(default=False, description="是否系统默认账号")
+
+class UserRolePermissionSchema(BaseModel):
+    role_code: str = Field(default=None, description="角色编码")
+    role_name: str = Field(default=None, description="角色名称")
+    role_id: int = Field(default=None, description="角色ID")
+    permissions: list["AuthPermissionSchema"] = Field(default=[], description="角色ID")
+
+    class Config:
+        # 接收任意类型
+        arbitrary_types_allowed = True
+
+class AuthPermissionSchema(BaseModel):
+    permission_id: int = Field(default=None, description="权限ID")
+    permission_name: str = Field(default=None, description="权限名称")
+    permission_code: str = Field(default=None, description="权限编码")
