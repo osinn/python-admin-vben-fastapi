@@ -6,7 +6,7 @@ from core.framework.common_schemas import BaseSchema
 
 
 class SysUserSchema(BaseSchema):
-    account: str = Field(..., description="账号")
+    account: str = Field(default=None, description="账号")
     # password: Optional[str] = Field(default=None, description="密码")
     psw_modified: int = Field(default=0, description="修改密码标记 0未修改；1已修改")
     nickname: Optional[str] = Field(default=None, description="昵称")

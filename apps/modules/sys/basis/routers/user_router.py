@@ -1,9 +1,11 @@
-from fastapi import APIRouter, Depends, Path, Body
+from fastapi import APIRouter, Depends, Path
+from sqlalchemy import update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from apps.modules.sys.basis.crud.crud_sys_user import CrudSysUser
 from apps.modules.sys.basis.models.sys_user import SysUserModel
-from apps.modules.sys.basis.params.sys_user import SysUserAddParam, SysUserEditParam, SysUserPageParam
+from apps.modules.sys.basis.params.sys_user import SysUserAddParam, SysUserEditParam, SysUserPageParam, \
+    SysUserResetPwdParam
 from apps.modules.sys.basis.schemas.sys_user import SysUserSchema
 from core.framework.auth import AuthValidation, PreAuthorize
 from core.framework.crud_async_session import crud_getter, AsyncGenericCRUD
@@ -54,4 +56,20 @@ async def delete_user(user_id: int = Path(description="用户唯一ID"),
     result = await crud_async_session.delete(user_id)
     if not result:
         return ErrorResponse("删除失败")
+    return SuccessResponse("OK")
+
+@user_router.post("/get_user_list_all", summary="查询全部用户")
+async def get_user_list_all(crud_async_session: AsyncGenericCRUD = Depends(crud_getter(SysUserModel))):
+    model_info_all = await crud_async_session.get_model_info_all(v_schema=SysUserSchema)
+    return SuccessResponse(model_info_all)
+
+@user_router.post("/get_user_list_all", summary="重置密码")
+async def get_user_list_all(sys_user_reset_pwd_param: SysUserResetPwdParam, crud_async_session: AsyncGenericCRUD = Depends(crud_getter(SysUserModel))):
+    user_info = await crud_async_session.get(sys_user_reset_pwd_param.id)
+    if user_info is None:
+        return ErrorResponse("用户不存在")
+
+    new_password = AuthValidation.get_password_hash(sys_user_reset_pwd_param.new_password)
+    # update(SysUserModel).where(and_(SysUserModel.id == sys_user_reset_pwd_param.id))
+    # await crud_async_session.db.execute()
     return SuccessResponse("OK")

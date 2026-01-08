@@ -8,6 +8,7 @@ from pydantic import BaseModel
 
 from core.framework.common_schemas import PageVo
 from core.framework.database import db_getter
+from core.utils.JSONUtils import JSONUtils
 
 
 class AsyncGenericCRUD:
@@ -109,6 +110,22 @@ class AsyncGenericCRUD:
             select(self.model_class).where(self.model_class.id == id)
         )
         return result.scalar_one_or_none()
+
+
+    async def get_model_info_all(self, v_schema = None) -> Optional[object]:
+        """
+        查询 model 所有非删除数据
+        :param v_schema 指定序列化，如果指定，则序列化后返回 v_schema 对象集合，否则返回 model 对象集合
+        :return:
+        """
+        result = await self.db.execute(
+            select(self.model_class).where(self.model_class.is_deleted == 0)
+        )
+        rows = result.scalars().all()
+        if v_schema:
+            return [v_schema(**v_schema.model_validate(obj).model_dump()) for obj in rows]
+        else:
+            return rows
 
     async def get_multi(self, skip: int = 0, limit: int = 100) -> List[object]:
         stmt = select(self.model_class).offset(skip).limit(limit)

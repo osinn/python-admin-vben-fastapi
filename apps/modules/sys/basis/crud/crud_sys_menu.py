@@ -13,23 +13,42 @@ class CrudSysMenu:
         :param crud_async_session:
         :return:
         """
-        sql = (f"select * from tbl_sys_user where is_deleted = 0"
-               f"{
-               " and status = :status" if sys_user_page_param.status is not None else ''
-               }"
-               f"{
-               " and sex =: sex" if sys_user_page_param.sex is not None else ''
-               }"
-               f"{
-               " and dept_id =: dept_id" if sys_user_page_param.dept_id is not None else ''
-               }"
-               f"{
-               " and (nickname LIKE CONCAT('%', :search_key, '%') "
-               "OR account LIKE CONCAT('%', :search_key, '%') "
-               "OR phone LIKE CONCAT('%', :search_key, '%') "
-               "OR staff_number LIKE CONCAT('%', :search_key, '%') "
-               "OR email LIKE CONCAT('%', :search_key, '%') )" if sys_user_page_param.search_key is not None else ''
-               }"
+        # sql = (f"select * from tbl_sys_user where is_deleted = 0"
+        #        f"{
+        #        " and status = :status" if sys_user_page_param.status is not None else ''
+        #        }"
+        #        f"{
+        #        " and sex =: sex" if sys_user_page_param.sex is not None else ''
+        #        }"
+        #        f"{
+        #        " and dept_id =: dept_id" if sys_user_page_param.dept_id is not None else ''
+        #        }"
+        #        f"{
+        #        " and (nickname LIKE CONCAT('%', :search_key, '%') "
+        #        "OR account LIKE CONCAT('%', :search_key, '%') "
+        #        "OR phone LIKE CONCAT('%', :search_key, '%') "
+        #        "OR staff_number LIKE CONCAT('%', :search_key, '%') "
+        #        "OR email LIKE CONCAT('%', :search_key, '%') )" if sys_user_page_param.search_key is not None else ''
+        #        }"
+        #        )
+        sql = [
+            "select * from tbl_sys_user where is_deleted = 0 "
+        ]
+        if sys_user_page_param.status is not None:
+            sql.append(" and status = :status")
+        if sys_user_page_param.sex is not None:
+            sql.append(" and sex = :sex")
+        if sys_user_page_param.dept_id is not None:
+            sql.append(" and dept_id = :dept_id")
+        if sys_user_page_param.search_key is not None:
+            sql.append("""
+               and (
+                   nickname LIKE CONCAT('%', :search_key, '%')
+                   OR account LIKE CONCAT('%', :search_key, '%')
+                   OR phone LIKE CONCAT('%', :search_key, '%')
+                   OR staff_number LIKE CONCAT('%', :search_key, '%')
+                   OR email LIKE CONCAT('%', :search_key, '%') 
                )
-        pageVo = await crud_async_session.page_select_model(sql, sys_user_page_param.__dict__, v_schema=SysUserSchema)
+            """)
+        pageVo = await crud_async_session.page_select_model("".join(sql), sys_user_page_param.__dict__, v_schema=SysUserSchema)
         return pageVo

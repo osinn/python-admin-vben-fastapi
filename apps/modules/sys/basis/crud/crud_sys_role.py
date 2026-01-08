@@ -13,16 +13,26 @@ class CrudSysRole:
         :param crud_async_session:
         :return:
         """
-        sql = (f"select * from tbl_sys_role where is_deleted = 0"
-               f"{
-               " and status = :status" if sys_role_page_param.status is not None else ''
-               }"
-               f"{
-               " and ("
-                   "name LIKE CONCAT('%', :search_key, '%') "
-                   "OR role_code LIKE CONCAT('%', :search_key, '%') "
-               ")" if sys_role_page_param.search_key is not None else ''
-               }"
+        # sql = (f"select * from tbl_sys_role where is_deleted = 0"
+        #        f"{
+        #        " and status = :status" if sys_role_page_param.status is not None else ''
+        #        }"
+        #        f"{
+        #        " and ("
+        #            "name LIKE CONCAT('%', :search_key, '%') "
+        #            "OR role_code LIKE CONCAT('%', :search_key, '%') "
+        #        ")" if sys_role_page_param.search_key is not None else ''
+        #        }"
+        #        )
+        sql = [
+            "select * from tbl_sys_role where is_deleted = 0"
+        ]
+        if sys_role_page_param.search_key is not None:
+            sql.append("""
+            and (
+                   name LIKE CONCAT('%', :search_key, '%') 
+                   OR role_code LIKE CONCAT('%', :search_key, '%')
                )
-        pageVo = await crud_async_session.page_select_model(sql, sys_role_page_param.__dict__, v_schema=SysRoleSchema)
+            """)
+        pageVo = await crud_async_session.page_select_model("".join(sql), sys_role_page_param.__dict__, v_schema=SysRoleSchema)
         return pageVo

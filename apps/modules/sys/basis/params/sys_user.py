@@ -2,7 +2,11 @@ from typing import Optional
 from datetime import datetime
 from pydantic import BaseModel, Field
 
+
 class SysUserAddParam(BaseModel):
+    """
+    添加用户参数
+    """
     account: str = Field(description="账号")
     nickname: str = Field(description="昵称")
     password: Optional[str] = Field(default=None, description="密码")
@@ -19,12 +23,24 @@ class SysUserAddParam(BaseModel):
 
 
 class SysUserEditParam(SysUserAddParam):
+    """
+    编辑用户参数
+    """
     id: int = Field(default=0, description="唯一ID")
+
 
 class SysUserPageParam(BaseModel):
     page_num: int = Field(default=1, description="当前页，默认1（从1开始）")
     page_size: int = Field(default=10, description="每页行数，默认10")
-    search_key: Optional[str] = Field(default=None,description="搜索关键字：用户名称/账号/手机号/工号/邮箱")
-    sex: Optional[int] = Field(default=None,description="性别 1-男；2-女；3未知")
-    dept_id: Optional[int] = Field(default=None,description="部门ID")
-    status: Optional[int] = Field(default=None,description="状态 0正常；1停用")
+    search_key: Optional[str] = Field(default=None, description="搜索关键字：用户名称/账号/手机号/工号/邮箱")
+    sex: Optional[int] = Field(default=None, description="性别 1-男；2-女；3未知")
+    dept_id: Optional[int] = Field(default=None, description="部门ID")
+    status: Optional[int] = Field(default=None, description="状态 0正常；1停用")
+
+
+class SysUserResetPwdParam(BaseModel):
+    """
+    重置密码参数
+    """
+    id: int = Field(description="唯一ID")
+    new_password: Optional[str] = Field(description="新密码")
