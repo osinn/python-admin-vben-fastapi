@@ -20,7 +20,7 @@ class SysUserAddParam(BaseModelSchema):
     dept_id: Optional[int] = Field(default=None, description="部门ID")
     sort: int = Field(default=0, description="排序")
     remarks: Optional[str] = Field(default=None, description="备注")
-    status: int = Field(default=0, description="状态 0正常；1停用")
+    status: bool = Field(default=False, description="状态 0正常；1停用")
 
 
 class SysUserEditParam(SysUserAddParam):
@@ -36,7 +36,7 @@ class SysUserPageParam(BaseModelSchema):
     search_key: Optional[str] = Field(default=None, description="搜索关键字：用户名称/账号/手机号/工号/邮箱")
     sex: Optional[int] = Field(default=None, description="性别 1-男；2-女；3未知")
     dept_id: Optional[int] = Field(default=None, description="部门ID")
-    status: Optional[int] = Field(default=None, description="状态 0正常；1停用")
+    status: Optional[bool] = Field(default=None, description="状态 false-正常；true-停用")
 
 
 class SysUserResetPwdParam(BaseModelSchema):

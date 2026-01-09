@@ -13,7 +13,7 @@ class SysMenuAddParam(BaseModelSchema):
     path: Optional[str] = Field(description="路由地址")
     redirect: Optional[str] = Field(default=None)
     component: Optional[str] = Field(default=None, description="组件路径")
-    status: Optional[bool] = Field(description="状态 0-正常；1-停用")
+    status: Optional[bool] = Field(description="状态 false-正常；true-停用")
     auth_code: Optional[str] = Field(default=None, description="权限标识")
     sort: Optional[int] = Field(description="排序")
     remarks: Optional[str] = Field(default="", description="备注")
@@ -23,7 +23,7 @@ class SysMenuEditParam(SysMenuAddParam):
     id: int = Field(default=0, description="唯一ID")
 
 class SysMenuTreeQueryParam(BaseModelSchema):
-    status: Optional[int] = Field(default=None,description="状态 0正常；1停用")
+    status: Optional[bool] = Field(default=None, description="状态 false-正常；true-停用")
 
 class SysMenuCheckExistsParam(BaseModelSchema):
     """

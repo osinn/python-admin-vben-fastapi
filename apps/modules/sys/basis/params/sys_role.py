@@ -19,7 +19,7 @@ class SysRolePageParam(BaseModelSchema):
     page_num: int = Field(default=1, description="当前页，默认1（从1开始）")
     page_size: int = Field(default=10, description="每页行数，默认10")
     search_key: Optional[str] = Field(default=None,description="搜索关键字：角色编码/角色名称")
-    status: Optional[int] = Field(default=None,description="状态 0正常；1停用")
+    status: Optional[bool] = Field(default=None, description="状态 false-正常；true-停用")
 
 class SysRoleAssignMenuParam(BaseModelSchema):
     """

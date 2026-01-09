@@ -73,3 +73,29 @@ CREATE TABLE `tbl_sys_user_role` (
   `role_id` bigint(20) NOT NULL COMMENT '角色ID',
   PRIMARY KEY (`id`) USING BTREE
 ) ENGINE=InnoDB COMMENT='用户角色表';
+
+CREATE TABLE `tbl_sys_post` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `post_code` varchar(128) DEFAULT NULL COMMENT '岗位编码',
+  `name` varchar(128) DEFAULT NULL COMMENT '岗位名称',
+  `remarks` varchar(512) DEFAULT NULL COMMENT '备注',
+  `sort` int(11) NOT NULL DEFAULT '1' COMMENT '排序',
+  `status` tinyint(1) NOT NULL DEFAULT '0' COMMENT '状态 0正常；1停用',
+  `is_deleted` tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否删除',
+  `created_by` bigint(20) DEFAULT NULL COMMENT '创建人',
+  `created_time` datetime DEFAULT NULL COMMENT '创建时间',
+  `updated_by` bigint(20) DEFAULT NULL COMMENT '更新人',
+  `updated_time` datetime DEFAULT NULL COMMENT '更新时间',
+  PRIMARY KEY (`id`) USING BTREE
+) ENGINE=InnoDB COMMENT='岗位表';
+
+CREATE TABLE `tbl_sys_dept_post` (
+  `id` bigint(20) NOT NULL COMMENT '主键Id',
+  `dept_id` bigint(20) NOT NULL COMMENT '部门Id',
+  `post_id` bigint(20) NOT NULL COMMENT '岗位Id',
+  `created_time` datetime NOT NULL COMMENT '创建时间',
+  `created_by` bigint(20) NOT NULL COMMENT '创建人ID',
+  PRIMARY KEY (`id`) USING BTREE,
+  KEY `idx_post_id` (`post_id`) USING BTREE,
+  KEY `idx_dept_id` (`dept_id`) USING BTREE
+) ENGINE=InnoDB COMMENT='部门岗位表';

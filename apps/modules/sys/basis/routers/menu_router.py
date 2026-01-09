@@ -5,11 +5,9 @@ from apps.modules.sys.basis.crud.crud_sys_menu import CrudSysMenu
 from apps.modules.sys.basis.models.sys_menu import SysMenuModel
 from apps.modules.sys.basis.params.sys_menu import SysMenuAddParam, SysMenuEditParam, SysMenuCheckExistsParam
 from core.common.param import ChangeSortParam
-from core.framework.auth import AuthValidation, PreAuthorize
+from core.framework.auth import PreAuthorize
 from core.framework.crud_async_session import crud_getter, AsyncGenericCRUD
-from core.framework.database import db_getter
 from core.framework.response import SuccessResponse, ErrorResponse
-from core.framework.sql_alchemy_helper import SQLAlchemyHelper
 
 menu_router = APIRouter(prefix="/menu")
 
