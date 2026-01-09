@@ -3,7 +3,7 @@ from typing import Type, Optional, List, Any
 
 from fastapi import Request, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, text
+from sqlalchemy import select, text, update, insert
 from pydantic import BaseModel
 
 from core.framework.common_schemas import PageVo
@@ -104,6 +104,63 @@ class AsyncGenericCRUD:
             return PageVo(total, [v_schema.model_validate(obj).model_dump() for obj in rows])
         else:
             return PageVo(total, list(rows) if rows else [])
+
+    async def bulk_update_fields(self, record_id: int, **fields) -> bool:
+        """
+        通用更新字段
+        :param id 唯一ID
+        :param fields 所需要更新的字段，例如：bulk_update_fields(123, updated_by=456, status=1)
+        :return 如果更新成功 返回True, 否则返回False
+        """
+        result = await self.db.execute(
+            update(self.model_class)
+            .where(self.model_class.id == record_id)
+            .values(**fields)
+        )
+        return result.rowcount > 0
+
+    async def bulk_insert(self,data_list: list[dict], table = None):
+        """
+        插入数据
+        :param data_list: 需要插入的数据 [{field:value}]
+        :param table: 表 如果不指定，使用对应注入的模型表
+        :return:
+        """
+        if not data_list:
+            return
+        stmt = insert(table if table is not None else self.model_class).values(data_list)
+        await self.db.execute(stmt)
+
+    async def change_status(self, id: int, status: int) -> bool:
+        """
+        更新状态值
+        :param id 唯一ID
+        :param status 状态值
+        :return 如果更新成功 返回True, 否则返回False
+        """
+        result = await self.db.execute(
+            update(self.model_class)
+            .where(self.model_class.id == id)
+            .values(status = status, updated_by = self.user["id"])
+        )
+        return result.rowcount > 0
+
+    async def change_sort(self, id: int, sort: int) -> bool:
+        """
+        更新排序值
+        :param id 唯一ID
+        :param sort 状态值
+        :return 如果更新成功 返回True, 否则返回False
+        """
+        result = await self.db.execute(
+            update(self.model_class)
+            .where(self.model_class.id == id)
+            .values(sort = sort, updated_by = self.user["id"])
+        )
+        return result.rowcount > 0
+
+    async def execute_sql(self, sql: str):
+        await self.db.execute(text(sql))
 
     async def get(self, id: int) -> Optional[object]:
         result = await self.db.execute(

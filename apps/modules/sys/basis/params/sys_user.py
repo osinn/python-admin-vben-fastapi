@@ -1,9 +1,10 @@
 from typing import Optional
 from datetime import datetime
-from pydantic import BaseModel, Field
+from pydantic import Field
 
+from core.framework.common_schemas import BaseModelSchema
 
-class SysUserAddParam(BaseModel):
+class SysUserAddParam(BaseModelSchema):
     """
     添加用户参数
     """
@@ -29,7 +30,7 @@ class SysUserEditParam(SysUserAddParam):
     id: int = Field(default=0, description="唯一ID")
 
 
-class SysUserPageParam(BaseModel):
+class SysUserPageParam(BaseModelSchema):
     page_num: int = Field(default=1, description="当前页，默认1（从1开始）")
     page_size: int = Field(default=10, description="每页行数，默认10")
     search_key: Optional[str] = Field(default=None, description="搜索关键字：用户名称/账号/手机号/工号/邮箱")
@@ -38,7 +39,7 @@ class SysUserPageParam(BaseModel):
     status: Optional[int] = Field(default=None, description="状态 0正常；1停用")
 
 
-class SysUserResetPwdParam(BaseModel):
+class SysUserResetPwdParam(BaseModelSchema):
     """
     重置密码参数
     """

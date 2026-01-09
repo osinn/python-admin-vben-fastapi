@@ -241,7 +241,6 @@ class PreAuthorize(AuthValidation):
     """
 
     def __init__(self, permissions: list[str] | None = None, roles: list[str] | None = None):
-        print("接口需要的权限")
         if permissions:
             self.permissions = set(permissions)
         else:

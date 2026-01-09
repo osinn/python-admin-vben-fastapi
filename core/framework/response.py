@@ -6,13 +6,16 @@ from fastapi import status as http_status
 from pydantic import BaseModel
 
 from core.framework import status as http
+from core.utils.JSONUtils import JSONUtils
 
 # -------------------------- 1. 定义通用类型与统一响应模型 --------------------------
 # 泛型类型变量，支持任意数据类型的data字段
 T = TypeVar("T")
 
 def _format_datetime(obj: Any) -> Any:
-    if isinstance(obj, dict):
+    if isinstance(obj, BaseModel):
+        return _format_datetime(obj.model_dump(by_alias=True))
+    elif isinstance(obj, dict):
         return {k: _format_datetime(v) for k, v in obj.items()}
     elif isinstance(obj, list):
         return [_format_datetime(item) for item in obj]
@@ -35,26 +38,15 @@ class ApiResponse(BaseModel, Generic[T]):
         arbitrary_types_allowed = True
 
     def model_dump(self, *args, **kwargs) -> Dict[str, Any]:
-        data = super().model_dump(*args, **kwargs)
+        data = super().model_dump(*args, **kwargs, by_alias=True)
         return _format_datetime(data)
 
     def model_dump_json(self, *args, **kwargs) -> str:
-        import json
-        data = self.model_dump(*args, **kwargs)
-        return json.dumps(data, default=str)  # default=str 防止意外类型
+        data = self.model_dump(*args, **kwargs, by_alias=True)
+        return JSONUtils.dumps(data, default=str)  # default=str 防止意外类型
 
-# def SuccessResponse(data=None, message: str = "") -> Response:
-#     return Response(
-#         content=ApiResponse(code=200, data=data, message=message).model_dump(),
-#         headers={"X-Trace-Id": "123456789", "X-App-Version": "v1.0"}  # 自定义头
-#     )
 class SuccessResponse(Response):
-    """
-    成功响应
-    Args:
-        data: 继承pydantic模型的实例
-        exclude_attrs: 要排除的属性列表
-    """
+
     def __init__(self, data=None, message="success", code=http.HTTP_SUCCESS, status=http_status.HTTP_200_OK, **kwargs):
         super().__init__(content=ApiResponse(code=200, data=data, message=message).model_dump(), status_code=status)
 # def success_response(data: Any = [], message: str = "") -> JSONResponse:

@@ -2,7 +2,10 @@ from typing import Optional
 
 from pydantic import Field, BaseModel
 
-class SysMenuAddParam(BaseModel):
+from core.framework.common_schemas import BaseModelSchema
+
+
+class SysMenuAddParam(BaseModelSchema):
 
     type: Optional[str] = Field(description="菜单类型 dir目录；menu菜单；button按钮")
     name: Optional[str] = Field(description="菜单名称")
@@ -19,5 +22,12 @@ class SysMenuAddParam(BaseModel):
 class SysMenuEditParam(SysMenuAddParam):
     id: int = Field(default=0, description="唯一ID")
 
-class SysMenuTreeQueryParam(BaseModel):
+class SysMenuTreeQueryParam(BaseModelSchema):
     status: Optional[int] = Field(default=None,description="状态 0正常；1停用")
+
+class SysMenuCheckExistsParam(BaseModelSchema):
+    """
+    检查菜单是否存在参数
+    """
+    id: Optional[int] = Field(description="菜单ID")
+    key: Optional[str] = Field(default="", description="检查值是否存在")

@@ -86,8 +86,9 @@ class BaseEntity(Base):
 
     id:  Mapped[int] = mapped_column(BIGINT, primary_key=True, comment='主键ID',
                                      default=lambda: str(snowflake.generate_id()),
-                                     server_default=str(snowflake.generate_id()),
+                                     server_default=str(snowflake.generate_id())
                                      )
+
     created_time: Mapped[datetime] = mapped_column(DateTime,
                                                    default=func.now(), # 新增时添加默认值
                                                    server_default=func.now(), comment='创建时间')
