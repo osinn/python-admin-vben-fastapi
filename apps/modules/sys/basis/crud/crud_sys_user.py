@@ -16,7 +16,7 @@ class CrudSysUser:
         :param crud_async_session:
         :return:
         """
-        # sql = (f"select * from tbl_sys_user where is_deleted = 0"
+        # sql = (f"select * from tbl_sys_user where is_deleted = false"
         #        f"{
         #        " and status = :status" if sys_user_page_param.status is not None else ''
         #        }"
@@ -35,7 +35,7 @@ class CrudSysUser:
         #        }"
         #        )
         sql = [
-            "select * from tbl_sys_user where is_deleted = 0"
+            "select * from tbl_sys_user where is_deleted = false"
         ]
         if sys_user_page_param.status is not None:
             sql.append(" and status = :status")

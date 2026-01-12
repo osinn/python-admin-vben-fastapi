@@ -136,7 +136,7 @@ async def db_getter() -> AsyncGenerator[AsyncSession, None]:
     """
     获取主数据库会话
 
-    数据库依赖项，它将在单个请求中使用，然后在请求完成后将其关闭。
+    数据库依赖项，它将在单个请求中使用，然后在请求完成后将其关闭。更改model值会在请求结束时自动保存到数据库中
 
     函数的返回类型被注解为 AsyncGenerator[int, None]，其中 AsyncSession 是生成的值的类型，而 None 表示异步生成器没有终止条件。
     """

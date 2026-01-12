@@ -1,4 +1,5 @@
 import re
+from datetime import datetime
 from typing import Type, Optional, List, Any
 
 from fastapi import Request, Depends
@@ -39,17 +40,19 @@ class AsyncGenericCRUD:
     async def list_model(
             self,
             sql: str,
-            params: dict = None
+            params: dict = None,
+            v_schema: Any = None
     ) -> list:
         """
         执行SQL查询返回第一个模型对象
         sql 动态参数判断
-            sql = (f"select * from tbl_sys_user where is_deleted = 0"
+            sql = (f"select * from tbl_sys_user where is_deleted = false"
                     f"{" and status =: status" if sys_user_page_param.status else ''}" # 如果 status 不为空则参与查询
                     f"{" and name =: search_key" if sys_user_page_param.search_key else ''}" # 如果 search_key 不为空则参与查询
                 )
         :param sql: 执行SQL
         :param params: 查询参数
+        :param v_schema: 序列化对象
         :return: 返回一个行字典集合
         """
         """
@@ -59,7 +62,10 @@ class AsyncGenericCRUD:
         """
         result = await self.db.execute(text(sql), params or {})
         rows = result.fetchall()
-        return [dict(row._mapping) for row in rows]
+        if rows and v_schema:
+            return [v_schema.model_validate(obj).model_dump() for obj in rows]
+        else:
+            return [dict(row._mapping) for row in rows]
 
     async def page_select_model(
             self,
@@ -70,7 +76,7 @@ class AsyncGenericCRUD:
         """
         执行SQL查询返回第一个模型对象
         sql 动态参数判断
-            sql = (f"select * from tbl_sys_user where is_deleted = 0"
+            sql = (f"select * from tbl_sys_user where is_deleted = false"
                     f"{" and status =: status" if sys_user_page_param.status else ''}" # 如果 status 不为空则参与查询
                     f"{" and name =: search_key" if sys_user_page_param.search_key else ''}" # 如果 search_key 不为空则参与查询
                 )
@@ -159,8 +165,13 @@ class AsyncGenericCRUD:
         )
         return result.rowcount > 0
 
-    async def execute_sql(self, sql: str):
-        await self.db.execute(text(sql))
+    async def execute_sql(self, sql: str, params: dict = None, fetch_data: bool = False):
+        if fetch_data:
+            result = await self.db.execute(text(sql), params or {})
+            return result.scalars().fetchall()
+        else:
+            await self.db.execute(text(sql), params or {})
+            return None
 
     async def get(self, id: int) -> Optional[object]:
         result = await self.db.execute(
@@ -169,14 +180,14 @@ class AsyncGenericCRUD:
         return result.scalar_one_or_none()
 
 
-    async def get_model_info_all(self, v_schema = None) -> Optional[object]:
+    async def get_model_info_all(self, v_schema = None) -> Optional[List[object]]:
         """
         查询 model 所有非删除数据
         :param v_schema 指定序列化，如果指定，则序列化后返回 v_schema 对象集合，否则返回 model 对象集合
         :return:
         """
         result = await self.db.execute(
-            select(self.model_class).where(self.model_class.is_deleted == 0)
+            select(self.model_class).where(self.model_class.is_deleted == False)
         )
         rows = result.scalars().all()
         if v_schema:
@@ -223,11 +234,20 @@ class AsyncGenericCRUD:
         await self.db.flush()
         return db_obj
 
-    async def delete(self, id: int) -> bool:
+    async def delete(self, id: int, logic_delete: bool = True) -> bool:
+        """
+        删除数据
+        :param id: 记录ID
+        :param logic_delete: 是否逻辑删除，默认是
+        :return:
+        """
         db_obj = await self.get(id)
         if not db_obj:
             return False
-        await self.db.delete(db_obj)
+        if logic_delete:
+            db_obj.is_deleted = True
+        else:
+            await self.db.delete(db_obj)
         return True
 
 def crud_getter(model_class: Type):

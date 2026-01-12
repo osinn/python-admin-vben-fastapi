@@ -19,7 +19,7 @@ class CrudSysPost:
         :return:
         """
         sql = [
-            "select * from tbl_sys_post where is_deleted = 0"
+            "select * from tbl_sys_post where is_deleted = false"
         ]
         if sys_post_query_param.search_key is not None:
             sql.append("""
@@ -41,7 +41,7 @@ class CrudSysPost:
                   FROM
                     sys_post p
                       LEFT JOIN sys_dept_post dp ON dp.post_id = p.id
-                      and dp.dept_id = #{param.deptId}
+                      and dp.dept_id = :dept_id
                   where del_flag = 0
             """
         ]

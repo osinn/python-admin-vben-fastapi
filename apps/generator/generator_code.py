@@ -10,7 +10,7 @@ from jinja2 import Template
 
 # ==================== 配置区 ====================
 DATABASE_URL = "mysql+pymysql://root:osinn123321@192.168.1.50:3306/osinn_vben?charset=utf8"
-DEFAULT_TABLE_NAME = "tbl_sys_dept_post"
+DEFAULT_TABLE_NAME = "tbl_sys_dict_item"
 OUTPUT_PREFIX_REMOVE = "tbl_"
 USE_MYSQL_BIGINT = True  # 设为 True 则 BIGINT 用 mysql.BIGINT
 # =================================================
@@ -24,7 +24,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 from datetime import {% if need_datetime %}datetime{% endif %}{% if need_date %}{% if need_datetime %}, {% endif %}date{% endif %}{% if need_time %}{% if need_datetime or need_date %}, {% endif %}time{% endif %}
 {% endif %}
 
-{% set skip_fields = ['id', 'created_by', 'created_time', 'updated_by', 'updated_time'] %}
+{% set skip_fields = ['id', 'created_by', 'created_time', 'updated_by', 'updated_time', 'is_deleted'] %}
 
 class {{ class_name }}(BaseEntity):
     __tablename__ = "{{ table_name }}"
@@ -41,7 +41,7 @@ from core.framework.common_schemas import BaseSchema
 from datetime import {% if need_datetime %}datetime{% endif %}{% if need_date %}{% if need_datetime %}, {% endif %}date{% endif %}{% if need_time %}{% if need_datetime or need_date %}, {% endif %}time{% endif %}
 {% endif %}
 
-{% set skip_fields = ['id', 'created_by', 'created_time', 'updated_by', 'updated_time'] %}
+{% set skip_fields = ['id', 'created_by', 'created_time', 'updated_by', 'updated_time', 'is_deleted'] %}
 
 class {{ class_name }}Schema(BaseSchema):
 {% for col in columns %}

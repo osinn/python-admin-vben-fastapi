@@ -27,7 +27,7 @@ class CrudSysMenu:
         if is_admin:
             result = await crud_async_session.db.execute(
                 select(crud_async_session.model_class.id).where(
-                    crud_async_session.model_class.is_deleted == 0,
+                    crud_async_session.model_class.is_deleted == False,
                     crud_async_session.model_class.status == 0
                 )
             )
@@ -53,7 +53,7 @@ class CrudSysMenu:
           :return:
           """
         result = await crud_async_session.db.execute(
-            select(crud_async_session.model_class).where(crud_async_session.model_class.is_deleted == 0)
+            select(crud_async_session.model_class).where(crud_async_session.model_class.is_deleted == False)
         )
         rows = result.scalars().all()
         route_item = CrudSysMenu.__build_route_item_tree(list(rows))

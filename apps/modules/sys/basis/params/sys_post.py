@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, List
 from pydantic import Field
 from core.framework.common_schemas import BaseSchema, BaseModelSchema
 
@@ -16,7 +16,7 @@ class SysPostAddParam(BaseModelSchema):
     status: Optional[bool] = Field(default=None, description="状态 false-正常；true-停用")
 
 class SysPostEditParam(SysPostAddParam):
-    id: int = Field(default=0, description="唯一ID")
+    id: int = Field(description="唯一ID")
 
 class DeptPostQueryParam(BaseModelSchema):
     """
@@ -25,3 +25,7 @@ class DeptPostQueryParam(BaseModelSchema):
     dept_id: int = Field(description="部门ID")
     checked: Optional[bool] = Field(default=None, description="是否选中,  true-则只查询选中的，false-则只查询未选中的，null-则查询所有")
     status: Optional[bool] = Field(default=None, description="状态 false-正常；true-停用")
+
+class DeptPostParam(BaseModelSchema):
+    dept_id: int = Field(description="部门ID")
+    post_ids: List[int] = Field(description="岗位ID")

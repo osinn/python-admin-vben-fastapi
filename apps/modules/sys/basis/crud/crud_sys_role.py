@@ -13,7 +13,7 @@ class CrudSysRole:
         :param crud_async_session:
         :return:
         """
-        # sql = (f"select * from tbl_sys_role where is_deleted = 0"
+        # sql = (f"select * from tbl_sys_role where is_deleted = false"
         #        f"{
         #        " and status = :status" if sys_role_page_param.status is not None else ''
         #        }"
@@ -25,7 +25,7 @@ class CrudSysRole:
         #        }"
         #        )
         sql = [
-            "select * from tbl_sys_role where is_deleted = 0"
+            "select * from tbl_sys_role where is_deleted = false"
         ]
         if sys_role_page_param.search_key is not None:
             sql.append("""

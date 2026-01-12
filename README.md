@@ -25,3 +25,11 @@ python-admin-vben 后台管理系统，使用Python FastAPI 基于 vben5.0 版�
 | `comment` | str | 列注释 | `comment='创建时间'` |
 | `key` | str | Python属性名 | `key='user_name'` |
 | `system` | bool | 是否为系统列 | `system=False` |
+
+### 数据更新
+```
+result = await crud_async_session.get(sys_config_id)
+result.is_deleted = True
+result.status = True
+查询出数据，修改属性值，函数执行完后会刷新到数据库中
+```

@@ -33,17 +33,18 @@ class BaseModelSchema(BaseModel):
     """
     赋值时驼峰转下划线赋值对象属性，响应数据时将下划线转驼峰
     """
-    model_config = ConfigDict(
-        alias_generator=snake_to_camel,
-        populate_by_name=True,
-        from_attributes=True,
-        extra="allow"
-    )
+    # model_config = ConfigDict(
+    #     alias_generator=snake_to_camel,
+    #     populate_by_name=True,
+    #     from_attributes=True,
+    #     extra="allow"
+    # )
 
-    def model_dump(self, **kwargs):
-        # 输出时转回 camelCase
-        kwargs.setdefault("by_alias", True)
-        return super().model_dump(**kwargs)
+    # def model_dump(self, **kwargs):
+    #     # 序列化时下划线是否转驼峰
+    #     by_alias = kwargs.get("by_alias", True)
+    #     kwargs.setdefault("by_alias", by_alias)
+    #     return super().model_dump(**kwargs)
 
 class BaseSchema(BaseModelSchema):
 
