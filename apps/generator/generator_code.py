@@ -10,7 +10,7 @@ from jinja2 import Template
 
 # ==================== 配置区 ====================
 DATABASE_URL = "mysql+pymysql://root:osinn123321@192.168.1.50:3306/osinn_vben?charset=utf8"
-DEFAULT_TABLE_NAME = "tbl_sys_dict_item"
+DEFAULT_TABLE_NAME = "tbl_job_scheduler"
 OUTPUT_PREFIX_REMOVE = "tbl_"
 USE_MYSQL_BIGINT = True  # 设为 True 则 BIGINT 用 mysql.BIGINT
 # =================================================

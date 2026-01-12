@@ -175,3 +175,34 @@ CREATE TABLE `tbl_sys_user_role` (
   `role_id` bigint(20) NOT NULL COMMENT '角色ID',
   PRIMARY KEY (`id`) USING BTREE
 ) ENGINE=InnoDB COMMENT='用户角色表';
+
+
+CREATE TABLE `tbl_job_group` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `group_name` varchar(50) NOT NULL COMMENT '任务组名称',
+  `created_by` bigint(20) NOT NULL COMMENT '创建人',
+  `created_time` datetime NOT NULL COMMENT '创建时间',
+  `updated_by` bigint(20) DEFAULT NULL COMMENT '更新人',
+  `updated_time` datetime DEFAULT NULL COMMENT '更新时间',
+  `is_deleted` tinyint(1) NOT NULL DEFAULT '0' COMMENT '删除标记 0-存在；1-删除',
+  PRIMARY KEY (`id`) USING BTREE
+) ENGINE=InnoDB COMMENT='任务调度任务组表';
+
+CREATE TABLE `tbl_job_scheduler` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `job_group_id` bigint(20) NOT NULL COMMENT '任务组ID',
+  `job_key` varchar(100) NOT NULL COMMENT '任务key唯一标识',
+  `trigger_type` tinyint(2) NOT NULL COMMENT '触发器类型：1-date、2-interval、3-cron',
+  `trigger_condition` varchar(255) NOT NULL COMMENT '触发器触发条件',
+  `remarks` varchar(255) NOT NULL DEFAULT '' COMMENT '备注',
+  `author` varchar(64) NOT NULL DEFAULT '' COMMENT '作者',
+  `alarm_email` varchar(255) DEFAULT NULL COMMENT '报警邮件',
+  `executor_handler` varchar(255) NOT NULL COMMENT '执行器任务handler(调用函数名称)',
+  `executor_param` varchar(512) DEFAULT NULL COMMENT '执行器任务参数',
+  `created_by` bigint(20) NOT NULL COMMENT '创建人',
+  `created_time` datetime NOT NULL COMMENT '创建时间',
+  `updated_by` bigint(20) DEFAULT NULL COMMENT '更新人',
+  `updated_time` datetime DEFAULT NULL COMMENT '更新时间',
+  `is_deleted` tinyint(1) NOT NULL DEFAULT '0' COMMENT '删除标记 0-存在；1-删除',
+  PRIMARY KEY (`id`) USING BTREE
+) ENGINE=InnoDB COMMENT='任务调度信息组表';

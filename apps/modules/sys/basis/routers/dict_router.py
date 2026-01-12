@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, Path
 
 from apps.modules.sys.basis.crud.crud_sys_dict import get_page_dict_list
+from apps.modules.sys.basis.crud.crud_sys_dict_item import delete_dict_item_of_dict_id
 from apps.modules.sys.basis.models.sys_dict import SysDictModel
 from apps.modules.sys.basis.params.sys_dict import SysDictPageParam, SysDictAddParam, SysDictEditParam
 from core.common.param import ChangeStatusParam
@@ -45,6 +46,7 @@ async def delete_dict(dict_id: int = Path(description="字典唯一ID"),
     result: bool = await crud_async_session.delete(dict_id)
     if not result:
         return ErrorResponse("删除失败")
+    await delete_dict_item_of_dict_id(dict_id, crud_async_session)
     return SuccessResponse("OK")
 
 @dict_router.put("/dict_change_status", summary="修改用户状态")

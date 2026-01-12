@@ -3,8 +3,6 @@ from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy import Boolean, Integer, String
 from sqlalchemy.dialects.mysql import BIGINT
 
-from datetime import datetime
-
 class SysDeptModel(BaseEntity):
     __tablename__ = "tbl_sys_dept"
 

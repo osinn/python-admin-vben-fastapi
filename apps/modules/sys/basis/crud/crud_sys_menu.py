@@ -21,6 +21,7 @@ class CrudSysMenu:
         :param crud_async_session:
         :return:
         """
+        # 检查是否存在管理员
         result = await crud_async_session.db.execute(select(exists().where(SysRoleModel.id == role_id, SysRoleModel.role_code == SUPER_ADMIN_ROLE)))
         is_admin = result.scalar()
         # 是不是管理员
