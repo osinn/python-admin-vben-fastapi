@@ -1,5 +1,4 @@
 import re
-from datetime import datetime
 from typing import Type, Optional, List, Any
 
 from fastapi import Request, Depends
@@ -9,8 +8,6 @@ from pydantic import BaseModel
 
 from core.framework.common_schemas import PageVo
 from core.framework.database import db_getter
-from core.utils.JSONUtils import JSONUtils
-
 
 class AsyncGenericCRUD:
     def __init__(self, user, model_class: Type, db: AsyncSession):
@@ -173,7 +170,7 @@ class AsyncGenericCRUD:
             await self.db.execute(text(sql), params or {})
             return None
 
-    async def get(self, id: int) -> Optional[object]:
+    async def get(self, id: int):
         result = await self.db.execute(
             select(self.model_class).where(self.model_class.id == id)
         )

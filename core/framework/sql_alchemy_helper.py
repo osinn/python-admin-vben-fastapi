@@ -1,4 +1,3 @@
-from core.framework.log_tools import logger
 from typing import Any, Dict, List, Optional, TypeVar, Type
 
 from sqlalchemy import text, select, and_, func
@@ -7,7 +6,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import DeclarativeBase
 
 from core.framework.common_schemas import PageVo
-from core.framework.exception import BizException
 
 T = TypeVar('T', bound=DeclarativeBase)
 
@@ -90,6 +88,21 @@ class SQLAlchemyHelper:
             return all_data
         else:
             return [dict(row) for row in result.mappings()]
+
+    @staticmethod
+    async def get_by_key(session: AsyncSession, key: str, value: str, model_class):
+
+        stmt = select(model_class)
+
+        # 添加过滤条件
+        filter_conditions = []
+        if not hasattr(model_class, key) or not value:
+            return None
+        column = getattr(model_class, key)
+        filter_conditions.append(column == value)
+        stmt = stmt.where(and_(*filter_conditions))
+        result = await session.execute(stmt)
+        return result.scalar_one_or_none()
 
     @staticmethod
     async def execute_first_model(

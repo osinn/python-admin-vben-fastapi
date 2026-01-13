@@ -226,7 +226,6 @@ class AuthAuthorize(AuthValidation):
     async def __call__(self, request: Request,
                        token: str = Depends(settings.oauth2_scheme),
                        db: AsyncSession = Depends(db_getter)) -> Auth:
-        print("进行接口登录验证")
 
         # token 登录认证
         user = await self.validate_token(token)
@@ -251,7 +250,6 @@ class PreAuthorize(AuthValidation):
             self.roles = None
 
     async def __call__(self, request: Request) -> None:
-        print("进行接口权限校验")
         if self.roles is None and self.permissions is None:
             return None
 

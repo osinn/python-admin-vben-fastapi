@@ -190,7 +190,7 @@ CREATE TABLE `tbl_job_group` (
 
 CREATE TABLE `tbl_job_scheduler` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `job_group_id` bigint(20) NOT NULL COMMENT '任务组ID',
+  `job_group_id` bigint(20) DEFAULT NULL COMMENT '任务组ID',
   `job_key` varchar(100) NOT NULL COMMENT '任务key唯一标识',
   `trigger_type` tinyint(2) NOT NULL COMMENT '触发器类型：1-date、2-interval、3-cron',
   `trigger_condition` varchar(255) NOT NULL COMMENT '触发器触发条件',

@@ -14,7 +14,7 @@ async def fetch_job_scheduler_list(job_scheduler_page_param: JobSchedulerPagePar
     if job_scheduler_page_param.search_key:
         sql.append("""
         and (
-            job_key like concat('%', :search_key, '%')
+            job_id like concat('%', :search_key, '%')
             or remarks like concat('%', :search_key, '%')
             or author like concat('%', :search_key, '%')
             or executor_handler like concat('%', :search_key, '%')

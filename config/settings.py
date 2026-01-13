@@ -1,3 +1,4 @@
+import asyncio
 from contextlib import asynccontextmanager
 
 import redis
@@ -7,9 +8,10 @@ from redis import AuthenticationError, RedisError
 
 # 导入公共环境配置
 from core.framework.cache_tools import cache
+
 from core.framework.log_tools import logger
 from core.framework.tools import import_modules_async
-from core.framework.scheduler_tools import job_scheduler
+from core.framework.scheduler_tools import job_scheduler, scheduler_manager
 
 """安全警告: 不要在生产中打开调试运行!"""
 
@@ -51,8 +53,21 @@ EVENTS = [
 
 @asynccontextmanager # 装饰器将生成器函数转换为异步上下文管理器
 async def lifespan(app: FastAPI):
+    # 注册任务调度装饰器
+    import apps.modules.sys.scheduler.job.registry
+
     # 应用程序启动时执行
     await import_modules_async(EVENTS, "全局事件", app=app, status=True)
+
+    # --- startup ---
+    async def run_init():
+        from core.framework.database_config import session_factory
+        db = session_factory()
+        try:
+           await scheduler_manager.register_all_tasks(db)
+        finally:
+            db.close()
+    await run_init()
     # yield 之前：进入上下文时执行的代码（设置/初始化）
     # yield 之后：退出上下文时执行的代码（清理/关闭）
     yield
