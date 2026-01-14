@@ -9,9 +9,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from apps.modules.sys.basis.crud.crud_sys_user import CrudSysUser
 from apps.modules.sys.basis.models.sys_user import SysUserModel
+from apps.modules.sys.basis.schemas.sys_user import SysUserSchema
 from config import settings
 from core.constants import auth_constant
+from core.constants.auth_constant import SUPER_ADMIN_ROLE
 from core.framework.crud_async_session import AsyncGenericCRUD, crud_getter
+from core.framework.exception import BizException
 from core.framework.log_tools import logger
 from core.framework.database import db_getter
 
@@ -25,6 +28,8 @@ from config.settings import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
 from core.utils.JSONUtils import JSONUtils
 from core.framework.sql_alchemy_helper import SQLAlchemyHelper
 from core.framework.cache_tools import cache
+from core.utils.ModelUtils import ModelUtils
+from core.utils.rsa_utils import decrypt_with_private_b64
 
 password_hash = PasswordHash.recommended()
 
@@ -50,6 +55,11 @@ class LoginRequestParam(BaseModel):
         json_schema_extra={"format": "password"},
         examples=["secret123"]
     )
+    ticket: str = Field(
+        ...,
+        description="票据",
+        examples=["ticket123"]
+    )
 
 
 class AuthValidation:
@@ -71,8 +81,10 @@ class AuthValidation:
         # 2. 关键修复：将datetime转换为Unix时间戳（秒数）
         to_encode.update({"exp": expire.timestamp()})
         encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-        user_dict = data.get("user").__dict__
-        user_dict.pop("password")
+        user_dict = ModelUtils.to_dict(data.get("user"))
+        # user_dict.pop("password")
+        is_admin = cls.hash_admin(user_dict)
+        user_dict["is_admin"] = is_admin
         # redis缓存过期时间,过期时间比jwt 晚30分钟
         ex_ms = (ACCESS_TOKEN_EXPIRE_MINUTES * 60 * 1000) + 1800000
         await cache.set("auth:" + data.get("sub"), JSONUtils.dumps(user_dict), ex_ms)
@@ -174,6 +186,21 @@ class AuthValidation:
                     detail="无权限操作"
                 )
 
+    @classmethod
+    def hash_admin(self, user: dict) -> bool:
+        """
+        检查在线用户是否是管理员角色
+        :param user: 在线用户信息
+        :return:
+        """
+        roles = user.get("roles", None)
+        if roles is None:
+            return False
+        for role in roles:
+            if role["role_code"] == SUPER_ADMIN_ROLE:
+                return True
+        return False
+
 
 class Auth(BaseModel):
     user: Any = None
@@ -196,17 +223,19 @@ class LoginAuth(AuthValidation):
         user = await crud_async_session.first_model(
             "select * from tbl_sys_user where account = :account",
             {"account": login_request_param.account},
-            SysUserModel
+            SysUserSchema
         )
         if not user:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="账号或密码错误"
+            raise BizException(
+                "账号或密码错误",
+                code=status.HTTP_401_UNAUTHORIZED
             )
-        if not self.verify_password(login_request_param.password, user.password):
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="账号或密码错误"
+        private_key = await cache.get("rsa:private:" + login_request_param.ticket)
+        password = decrypt_with_private_b64(login_request_param.password, private_key)
+        if not self.verify_password(password, user.password):
+            raise BizException(
+                "账号或密码错误",
+                code=status.HTTP_401_UNAUTHORIZED
             )
         # 这里模拟查询用户权限编码
         user_role_permissions = await CrudSysUser.get_sys_user_permission(user.id, crud_async_session)

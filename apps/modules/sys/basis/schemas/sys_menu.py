@@ -1,6 +1,11 @@
+import re
+
 from core.framework.common_schemas import BaseModelSchema
 from typing import List, Optional
-from pydantic import Field
+from pydantic import Field, ConfigDict
+
+from core.utils.str_utils import snake_to_camel
+
 
 class SysMenuSchema(BaseModelSchema):
     type: Optional[str] = Field(default=None, description="菜单类型 dir目录；menu菜单；button按钮")
@@ -15,7 +20,6 @@ class SysMenuSchema(BaseModelSchema):
     remarks: Optional[str] = Field(default=None, description="备注")
     meta: Optional[str] = Field(default=None)
 
-
 class RouteItemSchema(BaseModelSchema):
     id: Optional[int] = Field(default=None, description="菜单ID")
     parent_id: Optional[int] = Field(default=None, description="上级菜单")
@@ -28,6 +32,14 @@ class RouteItemSchema(BaseModelSchema):
     type: Optional[str] = Field(default=None, description="菜单类型 dir目录；menu菜单；button按钮")
     auth_code: Optional[str] = Field(default=None, description="权限标识")
     children: Optional[List["RouteItemSchema"]] = Field(default=[], description="子菜单")
+
+    model_config = ConfigDict(
+        # 返回浏览器序列化时下划线转驼峰命名 vhen 框架属性名称驼峰命名
+        alias_generator=snake_to_camel,
+        populate_by_name=True,
+        from_attributes=True,
+        extra="allow"
+    )
 
 class RouteMetaSchema(BaseModelSchema):
     active_icon: Optional[str] = Field(default=None, description="激活图标（菜单）")
@@ -55,3 +67,10 @@ class RouteMetaSchema(BaseModelSchema):
     order: Optional[int] = Field(default=None, description="用于路由->菜单排序")
     query: Optional[str] = Field(default=None, description="菜单所携带的参数")
     title: Optional[str] = Field(default=None, description="标题名称")
+
+    model_config = ConfigDict(
+        alias_generator=snake_to_camel,
+        populate_by_name=True,
+        from_attributes=True,
+        extra="allow"
+    )

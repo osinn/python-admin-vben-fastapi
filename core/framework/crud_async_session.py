@@ -60,7 +60,8 @@ class AsyncGenericCRUD:
         result = await self.db.execute(text(sql), params or {})
         rows = result.fetchall()
         if rows and v_schema:
-            return [v_schema.model_validate(obj).model_dump() for obj in rows]
+            # return [v_schema.model_validate(obj._mapping).model_dump() for obj in rows]
+            return [v_schema(**v_schema.model_validate(obj).model_dump()) for obj in rows]
         else:
             return [dict(row._mapping) for row in rows]
 

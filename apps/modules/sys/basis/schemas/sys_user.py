@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
 from pydantic import Field, BaseModel
 
@@ -7,7 +7,7 @@ from core.framework.common_schemas import BaseSchema
 
 class SysUserSchema(BaseSchema):
     account: str = Field(default=None, description="账号")
-    # password: Optional[str] = Field(default=None, description="密码")
+    password: Optional[str] = Field(default=None, exclude=True, description="密码")
     psw_modified: int = Field(default=0, description="修改密码标记 0未修改；1已修改")
     nickname: Optional[str] = Field(default=None, description="昵称")
     avatar: Optional[str] = Field(default=None, description="头像")
@@ -22,6 +22,7 @@ class SysUserSchema(BaseSchema):
     remarks: Optional[str] = Field(default=None, description="备注")
     status: int = Field(default=0, description="状态 0正常；1停用")
     is_default: bool = Field(default=False, description="是否系统默认账号")
+    roles: Optional[List] = Field(default=None, description="角色列表")
 
 class UserRolePermissionSchema(BaseModel):
     role_code: str = Field(default=None, description="角色编码")

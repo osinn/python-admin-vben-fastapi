@@ -62,11 +62,8 @@ async def lifespan(app: FastAPI):
     # --- startup ---
     async def run_init():
         from core.framework.database_config import session_factory
-        db = session_factory()
-        try:
-           await scheduler_manager.register_all_tasks(db)
-        finally:
-            db.close()
+        async with session_factory() as db:
+            await scheduler_manager.register_all_tasks(db)
     await run_init()
     # yield 之前：进入上下文时执行的代码（设置/初始化）
     # yield 之后：退出上下文时执行的代码（清理/关闭）

@@ -6,7 +6,8 @@ import uvicorn
 from starlette.middleware.cors import CORSMiddleware
 
 from apps.app_router import app_router
-from apps.modules.sys.basis.routers.ignoring_router import ignore_router
+
+from apps.modules.sys.basis.routers.login_auth_router import login_auth_router, ignore_router
 from config import settings
 from core.framework.auth import AuthAuthorize
 from core.framework.exception import register_exception
@@ -22,16 +23,17 @@ app = FastAPI(
 )
 
 # 公共（无需登录）的路由
-public_router = APIRouter()
+public_router = APIRouter(prefix="/api")
 public_router.include_router(ignore_router)
 
 # 需登录的路由（统一加依赖）
-auth_authorize_router = APIRouter(dependencies=[Depends(AuthAuthorize())]) # 全局注入所有路由自动应用此依赖登录认证
+auth_authorize_router = APIRouter(prefix="/api", dependencies=[Depends(AuthAuthorize())]) # 全局注入所有路由自动应用此依赖登录认证
 auth_authorize_router.include_router(app_router)
-
+auth_authorize_router.include_router(login_auth_router) # 登录成功后查询数据需要登录的接口
 # 分别挂载
 app.include_router(public_router)          # 无认证
 app.include_router(auth_authorize_router)  # 有认证
+
 
 
 # 全局异常捕捉处理
@@ -48,7 +50,7 @@ if settings.CORS_ORIGIN_ENABLE:
     )
 
 if __name__ == '__main__':
-    uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=settings.DEBUG)
+    uvicorn.run("main:app", host="127.0.0.1", port=5320, reload=settings.DEBUG)
     """
     启动项目
 

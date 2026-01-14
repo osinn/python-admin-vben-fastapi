@@ -147,6 +147,7 @@ class SchedulerManager:
         remarks: str = "",
         author: str = "Default author",
         alarm_email: str = "",
+        is_run: bool = True,
         kwargs: dict = None,
     ):
         def decorator(func):
@@ -159,12 +160,15 @@ class SchedulerManager:
             if cron_expr is not None:
                 # 使用 cron 表达式字符串
                 trigger_type = "cron"
+                job_trigger_type = 3
                 trigger_args = {"cron_expr": cron_expr}
             elif cron is not None:
                 trigger_type = "cron"
                 trigger_args = cron
+                job_trigger_type = 3
             else:
                 trigger_type = "interval"
+                job_trigger_type = 2
                 trigger_args = {}
                 if seconds is not None:
                     trigger_args["seconds"] = seconds
@@ -178,7 +182,7 @@ class SchedulerManager:
                 # 创建结果字典
             extra_kwarg = {
                 "job_id": task_id,
-                "trigger_type": trigger_type,
+                "trigger_type": job_trigger_type,
                 "trigger_condition":JSONUtils.dumps(trigger_args),
                 "remarks": remarks,
                 "author": author,
@@ -194,6 +198,7 @@ class SchedulerManager:
             self.tasks[task_id] = {
                 "func": func,
                 "full_path": full_path,
+                "is_run": is_run,
                 "trigger_type": trigger_type,
                 "trigger_args": trigger_args,
                 "name": name or func_name,
@@ -208,35 +213,37 @@ class SchedulerManager:
         """
         注册所有被装饰的任务
         """
-
         scheduler_service = job_scheduler.get_scheduler_service()
         job_all = scheduler_service.get_jobs()
         job_ids = [job_info.id for job_info in job_all]
         for task_id, task_info in self.tasks.items():
             if task_id in job_ids:
                 scheduler_service.remove_job(task_info['id'])
-
             job_scheduler_model: JobSchedulerModel = await SQLAlchemyHelper.get_by_key(db, "job_id", task_id, JobSchedulerModel)
 
             # 保存报错，未解决
-            # kwargs = task_info["kwargs"]
-            # if job_scheduler_model is None:
-            #     job_scheduler_model = JobSchedulerModel()
-            # job_scheduler_model.job_id = kwargs["job_id"]
-            # job_scheduler_model.trigger_type = kwargs["trigger_type"]
-            # job_scheduler_model.trigger_condition = kwargs["trigger_condition"]
-            # job_scheduler_model.remarks = kwargs["remarks"]
-            # job_scheduler_model.author = kwargs["author"]
-            # job_scheduler_model.alarm_email = kwargs["alarm_email"]
-            # job_scheduler_model.executor_param = kwargs["executor_param"]
-            # job_scheduler_model.executor_handler = kwargs["executor_handler"]
-            #
-            # if isinstance(job_scheduler_model.executor_param, dict):
-            #     job_scheduler_model.executor_param = JSONUtils.dumps(job_scheduler_model.executor_param)
-            #
-            # if job_scheduler_model.id is None:
-            #     db.add(job_scheduler_model)
-            # await db.flush()
+            kwargs = task_info["kwargs"]
+            if job_scheduler_model is None:
+                job_scheduler_model = JobSchedulerModel()
+                job_scheduler_model.created_by = -1
+            job_scheduler_model.job_id = kwargs["job_id"]
+            job_scheduler_model.trigger_type = kwargs["trigger_type"]
+            job_scheduler_model.trigger_condition = kwargs["trigger_condition"]
+            job_scheduler_model.remarks = kwargs["remarks"]
+            job_scheduler_model.author = kwargs["author"]
+            job_scheduler_model.alarm_email = kwargs["alarm_email"]
+            job_scheduler_model.executor_param = kwargs["executor_param"]
+            job_scheduler_model.executor_handler = kwargs["executor_handler"]
+
+            if isinstance(job_scheduler_model.executor_param, dict):
+                job_scheduler_model.executor_param = JSONUtils.dumps(job_scheduler_model.executor_param)
+
+            if job_scheduler_model.id is None:
+                db.add(job_scheduler_model)
+            await db.flush()
+
+            if task_info["is_run"] == False:
+                continue
 
             trigger_type = task_info["trigger_type"]
             trigger_args = task_info["trigger_args"]
@@ -291,6 +298,7 @@ class SchedulerManager:
                     replace_existing=True,
                 )
         print(f"注册任务调度完成")
+        await db.commit()
 
 # 创建全局调度器管理器
 scheduler_manager = SchedulerManager()
