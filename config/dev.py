@@ -14,7 +14,7 @@ Redis 数据库配置
 REDIS_DB_ENABLE = True
 # REDIS_DB_URL = "redis://:123456@177.8.0.5:6379/1"
 REDIS_DB_CONFIG = {
-    "host": "192.168.1.42",
+    "host": "192.168.1.50",
     "port": 6379,
     "decode_responses": True,
     "db": 1

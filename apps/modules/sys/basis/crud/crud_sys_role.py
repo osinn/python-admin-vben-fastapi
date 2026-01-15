@@ -34,5 +34,5 @@ class CrudSysRole:
                    OR role_code LIKE CONCAT('%', :search_key, '%')
                )
             """)
-        pageVo = await crud_async_session.page_select_model("".join(sql), sys_role_page_param.__dict__, v_schema=SysRoleSchema)
+        pageVo = await crud_async_session.page_select_model(" ".join(sql), sys_role_page_param.__dict__, v_schema=SysRoleSchema)
         return pageVo

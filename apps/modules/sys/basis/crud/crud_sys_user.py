@@ -1,5 +1,7 @@
+from sqlalchemy import exists, select
 from sqlalchemy.sql import roles
 
+from apps.modules.sys.basis.models.sys_user import SysUserModel
 from apps.modules.sys.basis.params.sys_user import SysUserPageParam
 
 from apps.modules.sys.basis.schemas.sys_user import SysUserSchema, UserRolePermissionSchema, AuthPermissionSchema
@@ -55,29 +57,30 @@ class CrudSysUser:
                  )
                 """
             )
-        pageVo = await crud_async_session.page_select_model("".join(sql), sys_user_page_param.__dict__, v_schema=SysUserSchema)
+        pageVo = await crud_async_session.page_select_model(" ".join(sql), sys_user_page_param.__dict__, v_schema=SysUserSchema)
         return pageVo
 
     @staticmethod
     async def get_sys_user_permission(user_id: int, crud_async_session: AsyncGenericCRUD):
         sql_parts = ["""
-              SELECT
-                DISTINCT p.id as permission_id,
-                         p.`name` as permission_name,
-                         p.auth_code as permission_code,
-                         r.`role_code`,
-                         r.`name` as role_name,
-                         r.id as role_id
-              FROM
-                tbl_sys_menu p
-                  JOIN tbl_sys_role_menu rp ON rp.menu_id = p.id
-                  JOIN tbl_sys_role r ON rp.role_id = r.id
-                  JOIN tbl_sys_user_role ur ON ur.role_id = r.id
-                  AND p.auth_code is not null and p.auth_code != ''
+                SELECT DISTINCT
+                    p.id AS permission_id,
+                    p.`name` AS permission_name,
+                    p.auth_code AS permission_code,
+                    r.`role_code`,
+                    r.`name` AS role_name,
+                    r.id AS role_id 
+                FROM
+                    tbl_sys_role r
+                    JOIN tbl_sys_user_role ur ON ur.role_id = r.id
+                    LEFT JOIN tbl_sys_role_menu rp ON rp.role_id = r.id
+                    LEFT JOIN tbl_sys_menu p ON rp.menu_id = p.id 
+                    AND p.auth_code IS NOT NULL 
+                    AND p.auth_code != '' 
         """]
         if user_id is not None:
             sql_parts.append(" AND ur.user_id = :user_id")
-        sql = "".join(sql_parts)
+        sql = " ".join(sql_parts)
 
         permissions = await crud_async_session.list_model(sql, {"user_id": user_id})
         is_admin = any(p["role_code"] == auth_constant.SUPER_ADMIN_ROLE for p in permissions)
@@ -104,7 +107,7 @@ class CrudSysUser:
                     roles[role_id]['permissions'].append({
                         'permission_code': auth_constant.ALL_PERMISSION,
                     })
-                elif is_admin == False and row.get("role_code") != auth_constant.SUPER_ADMIN_ROLE:
+                elif row['permission_code'] and is_admin == False and row.get("role_code") != auth_constant.SUPER_ADMIN_ROLE:
                     # 如果不是管理员，则根据角色拥有的权限分组
                     roles[role_id]['permissions'].append({
                         'permission_id': row['permission_id'],
@@ -117,3 +120,13 @@ class CrudSysUser:
                 UserRolePermissionSchema(**role_data)
                 for role_data in roles.values()
             ]
+
+    @classmethod
+    async def check_unique_email(cls, email: str, id: int, crud_async_session: AsyncGenericCRUD):
+        if email is None:
+            return True
+        su_bq = exists().where(SysUserModel.email == email)
+        if id:
+            su_bq = su_bq.where(SysUserModel.id != id)
+        result = await crud_async_session.db.execute(select(su_bq))
+        return result.scalar()

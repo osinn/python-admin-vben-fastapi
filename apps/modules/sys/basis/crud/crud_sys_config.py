@@ -27,5 +27,5 @@ async def get_page_config_list(sys_config_page_param: SysConfigPageParam,
     if sys_config_page_param.start_created_time and sys_config_page_param.end_created_time:
         sql.append(" and created_time between :start_created_time and :end_created_time")
     sql.append(" order by created_time desc")
-    page_vo = await crud_async_session.page_select_model("".join(sql), sys_config_page_param.__dict__, v_schema=SysConfigSchema)
+    page_vo = await crud_async_session.page_select_model(" ".join(sql), sys_config_page_param.__dict__, v_schema=SysConfigSchema)
     return page_vo

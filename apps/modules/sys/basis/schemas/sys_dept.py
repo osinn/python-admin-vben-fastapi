@@ -18,3 +18,4 @@ class SysDeptSchema(BaseSchema):
     status: Optional[bool] = Field(default=None, description="状态 0正常；1停用")
     dept_leader_user_names: Optional[str] = Field(default=None, description="部门领导名称")
     dept_leader_user_ids: Optional[List[int]] = Field(default=None, description="部门领导ID")
+    children: Optional[List["SysDeptSchema"]] = Field(default=[], description="子节点")

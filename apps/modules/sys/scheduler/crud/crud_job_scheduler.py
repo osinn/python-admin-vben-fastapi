@@ -22,6 +22,6 @@ async def fetch_job_scheduler_list(job_scheduler_page_param: JobSchedulerPagePar
         )
         """)
     sql.append(" order by created_time desc")
-    page_vo = await crud_async_session.page_select_model("".join(sql), job_scheduler_page_param.__dict__, v_schema=JobSchedulerSchema)
+    page_vo = await crud_async_session.page_select_model(" ".join(sql), job_scheduler_page_param.__dict__, v_schema=JobSchedulerSchema)
     return page_vo
 

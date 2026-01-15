@@ -44,7 +44,7 @@ class CrudSysMenu:
                          JOIN tbl_sys_role_menu rm ON rm.menu_id = m.id AND rm.role_id and rm.role_id = :role_id
                 """
             ]
-            rows = await crud_async_session.list_model("".join(sql), {"role_id": role_id})
+            rows = await crud_async_session.list_model(" ".join(sql), {"role_id": role_id})
             return [item["id"] for item in rows]
 
     @staticmethod
@@ -83,18 +83,22 @@ class CrudSysMenu:
                 except Exception:
                     pass
 
-            # 递归构建 children
             children = [
                 _convert_to_vo(child)
                 for child in children_map[sys_menu.id]
             ]
 
-            # 构造 VO（假设 SysMenuModel 字段与 RouteItemSchema 一致）
             return RouteItemSchema(
                 id=sys_menu.id,
                 parent_id=sys_menu.parent_id,
                 name=sys_menu.name,
                 meta=meta_obj,
+                path=sys_menu.path,
+                redirect=sys_menu.redirect,
+                component=sys_menu.component,
+                status=sys_menu.status,
+                type=sys_menu.type,
+                auth_code=sys_menu.auth_code,
                 children=children
             )
 
@@ -128,7 +132,7 @@ class CrudSysMenu:
                     AND m.type in :type
                 """
             ]
-            rows = await crud_async_session.list_model("".join(sql),
+            rows = await crud_async_session.list_model(" ".join(sql),
                                                        {"user_id": user_id, "status": False, "type": tuple(menu_types)})
             data_list = []
             for item in rows:
@@ -165,6 +169,6 @@ class CrudSysMenu:
                     AND (m.auth_code is not null and m.auth_code != '')
                 """
             ]
-            rows = await crud_async_session.list_model("".join(sql),
+            rows = await crud_async_session.list_model(" ".join(sql),
                                                        {"user_id": user_id, "status": False})
             return [row["auth_code"] for row in rows]

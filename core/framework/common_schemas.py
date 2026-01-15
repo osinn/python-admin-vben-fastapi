@@ -11,12 +11,12 @@ from pydantic import BaseModel, Field, ConfigDict
 
 class PageVo(BaseModel):
     total: int = Field(description="总数")
-    data:list = Field(default=None,description="分页数据")
+    items:list = Field(default=None, description="分页数据")
 
     def __init__(self, total: int, data: List = None):
         super().__init__(total=total, data=data)
         self.total = total
-        self.data = data
+        self.items = data
     class Config:
         arbitrary_types_allowed = True
 
@@ -33,12 +33,12 @@ class BaseModelSchema(BaseModel):
     """
     赋值时驼峰转下划线赋值对象属性，响应数据时将下划线转驼峰
     """
-    # model_config = ConfigDict(
-    #     alias_generator=snake_to_camel,
-    #     populate_by_name=True,
-    #     from_attributes=True,
-    #     extra="allow"
-    # )
+    model_config = ConfigDict(
+        # alias_generator=snake_to_camel,
+        # populate_by_name=True,
+        from_attributes=True,
+        # extra="allow"
+    )
 
     # def model_dump(self, **kwargs):
     #     # 序列化时下划线是否转驼峰

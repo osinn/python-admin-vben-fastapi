@@ -25,5 +25,5 @@ async def get_page_dict_list(sys_dict_page_param: SysDictPageParam,
         sql.append(" and status = :status")
 
     sql.append(" order by id desc")
-    page_vo = await crud_async_session.page_select_model("".join(sql), sys_dict_page_param.__dict__, v_schema=SysConfigSchema)
+    page_vo = await crud_async_session.page_select_model(" ".join(sql), sys_dict_page_param.__dict__, v_schema=SysConfigSchema)
     return page_vo

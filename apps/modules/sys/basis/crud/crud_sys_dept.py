@@ -6,7 +6,7 @@ from core.framework.crud_async_session import AsyncGenericCRUD
 class CrudSysDept:
 
     @classmethod
-    async def get_dept_all_tree(cls, extend_data: bool, crud_async_session: AsyncGenericCRUD):
+    async def get_dept_all_tree(cls, extend_data: bool, crud_async_session: AsyncGenericCRUD) -> List[SysDeptSchema]:
         model_info_all = await crud_async_session.get_model_info_all(v_schema=SysDeptSchema)
         if extend_data and len(model_info_all) == 0:
             dept_ids = set()
@@ -24,7 +24,7 @@ class CrudSysDept:
                         JOIN tbl_sys_dept_leader dl ON dl.user_id = u.id and dl.dept_id = :dept_ids
                 """
             ]
-            user_dept_data = await crud_async_session.execute_sql("".join(sql), {dept_ids: dept_ids})
+            user_dept_data = await crud_async_session.execute_sql(" ".join(sql), {dept_ids: dept_ids})
             dept_user_map = {}
             for item in user_dept_data:
                 dept_id = item["dept_id"]

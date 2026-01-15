@@ -1,8 +1,11 @@
+from typing import List
+
 from fastapi import APIRouter, Depends
 
 from apps.modules.sys.basis.crud.crud_sys_dept import CrudSysDept
 from apps.modules.sys.basis.models.sys_dept import SysDeptModel
 from apps.modules.sys.basis.params.sys_dept import SysDeptAddParam, SysDeptEditParam
+from apps.modules.sys.basis.schemas.sys_dept import SysDeptSchema
 from core.common.param import ChangeStatusParam
 from core.framework.auth import PreAuthorize
 from core.framework.crud_async_session import AsyncGenericCRUD, crud_getter
@@ -11,13 +14,13 @@ from core.framework.response import SuccessResponse, ErrorResponse
 dept_router = APIRouter(prefix="/dept")
 
 
-@dept_router.post("/add", summary="新增部门")
+@dept_router.post("/add_dept", summary="新增部门")
 async def add(sys_dept_add_param: SysDeptAddParam,
               crud_async_session: AsyncGenericCRUD = Depends(crud_getter(SysDeptModel))):
     await crud_async_session.create(sys_dept_add_param)
     return SuccessResponse("OK")
 
-@dept_router.put("/edit", summary="编辑部门")
+@dept_router.put("/edit_dept", summary="编辑部门")
 async def edit(sys_dept_edit_param: SysDeptEditParam,
                crud_async_session: AsyncGenericCRUD = Depends(crud_getter(SysDeptModel))):
     db_obj = await crud_async_session.get(sys_dept_edit_param.id)
@@ -51,10 +54,10 @@ async def sys_dept_change_status(change_status_param: ChangeStatusParam,
 
 @dept_router.get("/get_dept_all_tree", summary="查询所有部门树以及返回部门负责任人")
 async def get_dept_all_tree(crud_async_session: AsyncGenericCRUD = Depends(crud_getter(SysDeptModel))):
-    await CrudSysDept.get_dept_all_tree(True, crud_async_session)
-    return SuccessResponse("OK")
+    dept_all_tree = await CrudSysDept.get_dept_all_tree(True, crud_async_session)
+    return SuccessResponse(dept_all_tree)
 
 @dept_router.get("/get_simple_dept_all_tree", summary="查询所有部门树不返回设置部门负责任")
 async def get_simple_dept_all_tree(crud_async_session: AsyncGenericCRUD = Depends(crud_getter(SysDeptModel))):
-    await CrudSysDept.get_dept_all_tree(False, crud_async_session)
-    return SuccessResponse("OK")
+    data_list: List[SysDeptSchema] = await CrudSysDept.get_dept_all_tree(False, crud_async_session)
+    return SuccessResponse(data_list)

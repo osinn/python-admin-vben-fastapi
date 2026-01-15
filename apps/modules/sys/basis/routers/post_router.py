@@ -72,7 +72,7 @@ async def get_post_list(crud_async_session: AsyncGenericCRUD = Depends(crud_gett
     return SuccessResponse(model_info_all)
 
 
-@post_router.get("/get_dept_post_list_by_dept_id", summary="获取部门岗位列表")
+@post_router.post("/get_dept_post_list_by_dept_id", summary="获取部门岗位列表")
 async def get_dept_post_list_by_dept_id(dept_post_query_param: DeptPostQueryParam,
                                         crud_async_session: AsyncGenericCRUD = Depends(crud_getter(SysPostModel))):
     page_vo = await CrudSysPost.get_dept_post_list_by_dept_id(dept_post_query_param, crud_async_session)

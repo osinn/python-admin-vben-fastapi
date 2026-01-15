@@ -160,14 +160,14 @@ class AuthValidation:
             if user_permissions:  # 用户是否有分配权限
                 if user_permissions != {auth_constant.ALL_PERMISSION}:  # 是否管理员权限
                     if not (permissions & user_permissions):  # 用户是否拥有指定权限需要的权限
-                        raise HTTPException(
-                            status_code=status.HTTP_403_FORBIDDEN,
-                            detail="无权限操作"
+                        raise BizException(
+                            "无权限操作",
+                            code=status.HTTP_403_FORBIDDEN
                         )
             else:
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail="无权限操作"
+                raise BizException(
+                    "无权限操作",
+                    code=status.HTTP_403_FORBIDDEN
                 )
 
     @classmethod
@@ -176,14 +176,14 @@ class AuthValidation:
         if roles:  # 需要验证权限
             if user_roles:  # 用户是否有分配权限
                 if not (roles & user_roles):  # 用户是否拥有指定权限需要的权限
-                    raise HTTPException(
-                        status_code=status.HTTP_403_FORBIDDEN,
-                        detail="无权限操作"
+                    raise BizException(
+                        "无权限操作",
+                        code=status.HTTP_403_FORBIDDEN
                     )
             else:
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail="无权限操作"
+                raise BizException(
+                    "无权限操作",
+                    code=status.HTTP_403_FORBIDDEN
                 )
 
     @classmethod
@@ -237,7 +237,6 @@ class LoginAuth(AuthValidation):
                 "账号或密码错误",
                 code=status.HTTP_401_UNAUTHORIZED
             )
-        # 这里模拟查询用户权限编码
         user_role_permissions = await CrudSysUser.get_sys_user_permission(user.id, crud_async_session)
         user.roles = user_role_permissions
         access_token = await AuthValidation.create_access_token(
@@ -308,15 +307,17 @@ class PreAuthorize(AuthValidation):
                 # 用户权限验证
                 await self.validate_permissions(self.permissions, permission_codes)
             else:
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
+                raise BizException(
+                    "无权限操作",
+                    code=status.HTTP_401_UNAUTHORIZED
                 )
         if self.roles:
             print("验证用户角色权限", self.roles)
             if role_codes:
                 await self.validate_role_permissions(self.roles, role_codes)
             else:
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
+                raise BizException(
+                    "无权限操作",
+                    code=status.HTTP_401_UNAUTHORIZED
                 )
         return None

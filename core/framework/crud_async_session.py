@@ -178,11 +178,11 @@ class AsyncGenericCRUD:
         return result.scalar_one_or_none()
 
 
-    async def get_model_info_all(self, v_schema = None) -> Optional[List[object]]:
+    async def get_model_info_all(self, v_schema = None) -> Optional[Any]:
         """
         查询 model 所有非删除数据
-        :param v_schema 指定序列化，如果指定，则序列化后返回 v_schema 对象集合，否则返回 model 对象集合
-        :return:
+        :param v_schema 指定序列化
+        :return: 如果指定，则序列化后返回 v_schema 对象集合，否则返回 model 对象集合
         """
         result = await self.db.execute(
             select(self.model_class).where(self.model_class.is_deleted == False)
