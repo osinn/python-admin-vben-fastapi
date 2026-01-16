@@ -105,9 +105,9 @@ class AsyncGenericCRUD:
         rows = result.fetchall()
 
         if rows and v_schema:
-            return PageVo(total, [v_schema.model_validate(obj).model_dump() for obj in rows])
+            return PageVo(total, [v_schema(**v_schema.model_validate(obj).model_dump()) for obj in rows])
         else:
-            return PageVo(total, list(rows) if rows else [])
+            return PageVo(total, rows if rows else [])
 
     async def bulk_update_fields(self, record_id: int, **fields) -> bool:
         """
@@ -166,7 +166,8 @@ class AsyncGenericCRUD:
     async def execute_sql(self, sql: str, params: dict = None, fetch_data: bool = False):
         if fetch_data:
             result = await self.db.execute(text(sql), params or {})
-            return result.scalars().fetchall()
+            result_data = result.mappings().all()
+            return [dict(row) for row in result_data]
         else:
             await self.db.execute(text(sql), params or {})
             return None
@@ -199,6 +200,11 @@ class AsyncGenericCRUD:
         return list(result.scalars().all())
 
     async def create(self, obj_in: BaseModel) -> object:
+        """
+        Field(exclude=True) 如果字段不在 ORM模型中，需要在Field中将exclude设置为 True排出此字段，否则不会报错
+        :param obj_in:
+        :return:
+        """
         obj_data = obj_in.model_dump()
 
         user = self.user

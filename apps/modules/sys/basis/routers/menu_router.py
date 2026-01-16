@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Depends, Path
+from typing import Optional
+
+from fastapi import APIRouter, Depends, Path, Query
 from sqlalchemy import select, exists
 
 from apps.modules.sys.basis.crud.crud_sys_menu import CrudSysMenu
@@ -64,8 +66,8 @@ async def delete_menu(menu_id: int = Path(description="菜单唯一ID"),
 
 
 @menu_router.get("/get_menu_tree_list_all", summary="获取树形菜单")
-async def get_menu_tree_list_all(crud_async_session: AsyncGenericCRUD = Depends(crud_getter(SysMenuModel))):
-    route_item = await CrudSysMenu.get_menu_tree_list_all(crud_async_session)
+async def get_menu_tree_list_all(status: Optional[int] = Query(default=None, description="菜单状态"), crud_async_session: AsyncGenericCRUD = Depends(crud_getter(SysMenuModel))):
+    route_item = await CrudSysMenu.get_menu_tree_list_all(crud_async_session, {"status": status})
     return SuccessResponse(route_item)
 
 

@@ -6,7 +6,7 @@ async def get_page_config_list(sys_config_page_param: SysConfigPageParam,
                     crud_async_session: AsyncGenericCRUD):
     sql = [
         """
-        select * from tbl_sys_config where is_deleted = false
+        select * from tbl_sys_config where is_deleted = 0
         """
     ]
     if sys_config_page_param.search_key:

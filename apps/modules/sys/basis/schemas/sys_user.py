@@ -8,7 +8,7 @@ from core.framework.common_schemas import BaseSchema
 class SysUserSchema(BaseSchema):
     account: str = Field(default=None, description="账号")
     password: Optional[str] = Field(default=None, exclude=True, description="密码")
-    psw_modified: int = Field(default=0, description="修改密码标记 0未修改；1已修改")
+    psw_modified: int = Field(default=1, description="修改密码标记 1未修改；2已修改")
     nickname: Optional[str] = Field(default=None, description="昵称")
     avatar: Optional[str] = Field(default=None, description="头像")
     email: Optional[str] = Field(default=None, description="邮箱")
@@ -17,12 +17,18 @@ class SysUserSchema(BaseSchema):
     birthday: Optional[datetime] = Field(default=None, description="生日")
     sex: int = Field(default=3, description="性别 1-男；2-女；3未知")
     dept_id: Optional[int] = Field(default=None, description="部门ID")
-    lock_account: int = Field(default=0, description="锁定标记 0正常；1锁定")
+    dept_name: Optional[str] = Field(default=None, description="部门名称")
+    lock_account: int = Field(default=0, description="锁定标记 1正常；2锁定")
     sort: int = Field(default=0, description="排序")
     remarks: Optional[str] = Field(default=None, description="备注")
-    status: int = Field(default=0, description="状态 0正常；1停用")
-    is_default: bool = Field(default=False, description="是否系统默认账号")
-    roles: Optional[List] = Field(default=None, description="角色列表")
+    status: int = Field(default=0, description="状态 1正常；2停用")
+    is_default: int = Field(default=False, description="是否系统默认账号，1-默认，2-非默认")
+    role_ids: Optional[List[int]] = Field(default=None, description="角色id列表")
+    role_names: Optional[str] = Field(default=None, description="角色名称")
+    post_ids: Optional[List[int]] = Field(default=None, description="岗位id列表")
+    post_names: Optional[str] = Field(default=None, description="岗位名称")
+
+    roles: Optional[List] = Field(default=None, description="用户角色列表")
 
 class UserRolePermissionSchema(BaseModel):
     role_code: str = Field(default=None, description="角色编码")

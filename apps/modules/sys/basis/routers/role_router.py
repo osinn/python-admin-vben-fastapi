@@ -1,3 +1,5 @@
+from typing import Optional
+
 from fastapi import APIRouter, Depends, Path
 from sqlalchemy import delete, insert, except_
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -21,19 +23,26 @@ async def get_role_list(sys_role_page_param: SysRolePageParam, crud_async_sessio
     page_vo = await CrudSysRole.page_query_role_list(sys_role_page_param, crud_async_session)
     return SuccessResponse(page_vo)
 
-@role_router.post("/get_role_list_all", summary="查询全部角色")
-async def get_role_list_all(crud_async_session: AsyncGenericCRUD = Depends(crud_getter(SysRoleModel))):
-    model_info_all = await crud_async_session.get_model_info_all(v_schema=SysRoleSchema)
+@role_router.get("/get_role_list_all", summary="查询全部角色")
+async def get_role_list_all(status: Optional[int], crud_async_session: AsyncGenericCRUD = Depends(crud_getter(SysRoleModel))):
+    sql = [
+        "select * from tbl_sys_role where is_deleted = 0 and status = :status"
+    ]
+    param = None
+    if status:
+        sql.append(" and status = :status")
+        param = {"status": status}
+    model_info_all = await crud_async_session.execute_sql(" ".join(sql), param)
     return SuccessResponse(model_info_all)
 
-@role_router.post("/add", summary="添加角色")
+@role_router.post("/add_role", summary="添加角色")
 async def create_role(sys_role_add_schema: SysRoleAddParam, crud_async_session: AsyncGenericCRUD = Depends(crud_getter(SysRoleModel)),
                       _ = Depends(PreAuthorize(permissions=["system:role:add"]))
                       ):
     await crud_async_session.create(sys_role_add_schema)
     return SuccessResponse("OK")
 
-@role_router.put("/edit", summary="编辑角色")
+@role_router.put("/edit_role", summary="编辑角色")
 async def edit_role(sys_role_edit_schema: SysRoleEditParam, crud_async_session: AsyncGenericCRUD = Depends(crud_getter(SysRoleModel)),
                     _ = Depends(PreAuthorize(permissions=["system:role:edit"]))
                     ):

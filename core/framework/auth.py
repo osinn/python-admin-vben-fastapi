@@ -221,7 +221,8 @@ class LoginAuth(AuthValidation):
         print("登录", login_request_param)
 
         user = await crud_async_session.first_model(
-            "select * from tbl_sys_user where account = :account",
+            # 未删除、未锁账号、启用状态
+            "select * from tbl_sys_user where is_deleted = 0 and lock_account = 1 and status = 1 and account = :account",
             {"account": login_request_param.account},
             SysUserSchema
         )

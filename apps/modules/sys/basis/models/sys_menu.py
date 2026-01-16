@@ -16,7 +16,7 @@ class SysMenuModel(BaseEntity):
     path: Mapped[str] = mapped_column(String(512), comment="路由地址")
     redirect: Mapped[str] = mapped_column(String(255))
     component: Mapped[str] = mapped_column(String(512), comment="组件路径")
-    status: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, comment="状态 0-正常；1-停用")
+    status: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, comment="状态 1-正常；2-停用")
     auth_code: Mapped[str] = mapped_column(String(128), comment="权限标识")
     sort: Mapped[int] = mapped_column(Integer, nullable=False, default=0, comment="排序")
     remarks: Mapped[str] = mapped_column(String(512), comment="备注")

@@ -12,8 +12,8 @@ class SysRoleModel(BaseEntity):
     name: Mapped[str] = mapped_column(String(128), comment="角色名称")
     remarks: Mapped[str] = mapped_column(String(512), comment="备注")
     sort: Mapped[int] = mapped_column(Integer, nullable=False, comment="排序", default=0)
-    status: Mapped[bool] = mapped_column(Boolean, comment="状态 0正常；1停用", default=False)
-    is_default: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, comment="是否系统默认账号")
+    status: Mapped[int] = mapped_column(Integer, comment="状态 1正常；2停用", default=1)
+    is_default: Mapped[int] = mapped_column(Integer, nullable=False, default=2, comment="是否系统默认账号，1-默认，2-非默认")
 
 
 

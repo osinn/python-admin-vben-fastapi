@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Optional, List
 
 from pydantic import Field, BaseModel
@@ -20,6 +21,8 @@ class SysRolePageParam(BaseModelSchema):
     page_size: int = Field(default=10, description="每页行数，默认10")
     search_key: Optional[str] = Field(default=None,description="搜索关键字：角色编码/角色名称")
     status: Optional[bool] = Field(default=None, description="状态 false-正常；true-停用")
+    start_created_time: Optional[datetime] = Field(default=None, description="创建时间 开始时间")
+    end_created_time: Optional[datetime] = Field(default=None, description="创建时间 结束时间")
 
 class SysRoleAssignMenuParam(BaseModelSchema):
     """

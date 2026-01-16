@@ -3,6 +3,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from apps.modules.sys.basis.crud.crud_sys_user import CrudSysUser
 from apps.modules.sys.basis.models.sys_user import SysUserModel
+from apps.modules.sys.basis.models.sys_user_post import SysUserPostModel
+from apps.modules.sys.basis.models.sys_user_role import SysUserRoleModel
 from apps.modules.sys.basis.params.sys_user import SysUserAddParam, SysUserEditParam, SysUserPageParam, \
     SysUserResetPwdParam
 from apps.modules.sys.basis.schemas.sys_user import SysUserSchema
@@ -20,6 +22,8 @@ async def get_user_list(sys_user_page_param: SysUserPageParam,
                         crud_async_session: AsyncGenericCRUD = Depends(crud_getter(SysUserModel))
                         ):
     page_vo = await CrudSysUser.page_query_user_list(sys_user_page_param, crud_async_session)
+    await CrudSysUser.fill_base_user_info(page_vo.items, crud_async_session)
+    await CrudSysUser.fill_user_data(page_vo.items,crud_async_session)
     return SuccessResponse(page_vo)
 
 @user_router.get("/{user_id}/get_user_by_id", summary="获取用户详情")
@@ -35,7 +39,28 @@ async def create_user(sys_user_add_schema: SysUserAddParam, crud_async_session: 
     # 保存用户信息
     if sys_user_add_schema.password:
         sys_user_add_schema.password = AuthValidation.get_password_hash(sys_user_add_schema.password)
-    await crud_async_session.create(sys_user_add_schema)
+
+    is_unique_email: bool = await CrudSysUser.check_unique_email(sys_user_add_schema.email, None,crud_async_session)
+    if is_unique_email:
+        return ErrorResponse("邮箱已存在")
+
+    is_unique_staff_number: bool = await CrudSysUser.check_unique_staff_number(sys_user_add_schema.staff_number, None, crud_async_session)
+    if is_unique_staff_number:
+        return ErrorResponse("员工编号已存在")
+
+    db_obj = await crud_async_session.create(sys_user_add_schema)
+
+
+    if sys_user_add_schema.role_ids:
+        roles = [SysUserRoleModel(user_id=db_obj.id, role_id=role_id) for role_id in
+                 sys_user_add_schema.role_ids]
+        crud_async_session.db.add_all(roles)
+
+    if sys_user_add_schema.post_ids:
+        posts = [SysUserPostModel(user_id=db_obj.id, post_id=post_id) for post_id in
+                 sys_user_add_schema.post_ids]
+        crud_async_session.db.add_all(posts)
+
     return SuccessResponse("OK")
 
 @user_router.put("/edit_user", summary="编辑用户")
@@ -48,7 +73,23 @@ async def edit_user(sys_user_edit_schema: SysUserEditParam, crud_async_session: 
     if sys_user_edit_schema.password:
         sys_user_edit_schema.password = AuthValidation.get_password_hash(sys_user_edit_schema.password)
 
-    await CrudSysUser.check_unique_email(sys_user_edit_schema.email, sys_user_edit_schema.id, crud_async_session)
+    is_unique_email: bool = await CrudSysUser.check_unique_email(sys_user_edit_schema.email, sys_user_edit_schema.id, crud_async_session)
+    if is_unique_email:
+        return ErrorResponse("邮箱已存在")
+
+    is_unique_staff_number: bool = await CrudSysUser.check_unique_staff_number(sys_user_edit_schema.staff_number, sys_user_edit_schema.id, crud_async_session)
+    if is_unique_staff_number:
+        return ErrorResponse("员工编号已存在")
+
+    await CrudSysUser.delete_user_post_and_role_of_user_id(sys_user_edit_schema.id, crud_async_session)
+
+    if sys_user_edit_schema.role_ids:
+       roles = [SysUserRoleModel(user_id = sys_user_edit_schema.id, role_id = role_id) for role_id in sys_user_edit_schema.role_ids]
+       crud_async_session.db.add_all(roles)
+    if sys_user_edit_schema.post_ids:
+       posts = [SysUserPostModel(user_id = sys_user_edit_schema.id, post_id = post_id) for post_id in sys_user_edit_schema.post_ids]
+       crud_async_session.db.add_all(posts)
+
     await crud_async_session.update(sys_user_edit_schema, db_obj)
     return SuccessResponse("OK")
 
@@ -75,7 +116,7 @@ async def sys_user_reset(sys_user_reset_pwd_param: SysUserResetPwdParam, crud_as
     if user_info is None:
         return ErrorResponse("用户不存在")
     user = crud_async_session.user
-    new_password = AuthValidation.get_password_hash(sys_user_reset_pwd_param.new_password)
+    new_password = AuthValidation.get_password_hash(sys_user_reset_pwd_param.password)
     result: bool = await crud_async_session.bulk_update_fields(sys_user_reset_pwd_param.id, password=new_password, updated_by = user["id"])
     if not result:
         return ErrorResponse("重置密码失败")

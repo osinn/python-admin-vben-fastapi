@@ -1,6 +1,6 @@
 from typing import List, cast
 
-from sqlalchemy import select, exists, distinct
+from sqlalchemy import select, exists, distinct, and_
 
 from apps.modules.sys.basis.models.sys_menu import SysMenuModel
 from apps.modules.sys.basis.models.sys_role import SysRoleModel
@@ -41,21 +41,33 @@ class CrudSysMenu:
                 """
                 SELECT m.id
                 FROM tbl_sys_menu m
-                         JOIN tbl_sys_role_menu rm ON rm.menu_id = m.id AND rm.role_id and rm.role_id = :role_id
+                         JOIN tbl_sys_role_menu rm ON rm.menu_id = m.id AND rm.role_id and m.is_deleted = 0 and rm.role_id = :role_id
                 """
             ]
             rows = await crud_async_session.list_model(" ".join(sql), {"role_id": role_id})
             return [item["id"] for item in rows]
 
     @staticmethod
-    async def get_menu_tree_list_all(crud_async_session: AsyncGenericCRUD) -> List[RouteItemSchema]:
+    async def get_menu_tree_list_all(crud_async_session: AsyncGenericCRUD, params: dict = None) -> List[RouteItemSchema]:
         """
           查询 model 所有非删除数据
           :param v_schema 指定序列化，如果指定，则序列化后返回 v_schema 对象集合，否则返回 model 对象集合
           :return:
           """
+        stmt = select(crud_async_session.model_class).where(crud_async_session.model_class.is_deleted == False)
+        if params:
+            filter_conditions = []
+            for key, value in params.items():
+                # if isinstance(value, str):
+                #     condition = f"{key} == '{value}'"
+                # else:
+                #     condition = f"{key} == {value}"
+                if value:
+                    filter_conditions.append(key == value)
+            if len(filter_conditions) > 0:
+                stmt = stmt.where(and_(*filter_conditions))
         result = await crud_async_session.db.execute(
-            select(crud_async_session.model_class).where(crud_async_session.model_class.is_deleted == False)
+            stmt
         )
         rows = result.scalars().all()
         route_item = CrudSysMenu.__build_route_item_tree(list(rows))
@@ -127,6 +139,7 @@ class CrudSysMenu:
                          JOIN tbl_sys_role_menu rm ON rm.menu_id = m.id
                          JOIN tbl_sys_role sr on sr.id = rm.role_id
                          JOIN tbl_sys_user_role sur on sur.role_id = sr.id
+                    where m.is_deleted = 0
                     AND sur.user_id = :user_id
                     AND m.status = :status
                     AND m.type in :type
@@ -164,6 +177,7 @@ class CrudSysMenu:
                          JOIN tbl_sys_role_menu rm ON rm.menu_id = m.id
                          JOIN tbl_sys_role sr on sr.id = rm.role_id
                          JOIN tbl_sys_user_role sur on sur.role_id = sr.id
+                    where m.is_deleted = 0
                     AND sur.user_id = :user_id
                     AND m.status = :status
                     AND (m.auth_code is not null and m.auth_code != '')
