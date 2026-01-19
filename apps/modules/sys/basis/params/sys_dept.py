@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, List
 
 from pydantic import Field
 
@@ -10,12 +10,13 @@ class SysDeptPageParam(BaseModelSchema):
     name: Optional[str] = Field(default=None, description="搜索部门名称")
 
 class SysDeptAddParam(BaseModelSchema):
-    parent_id: int = Field(default=None, description="父部门ID")
+    parent_id: int = Field(default=0, init=True, description="父部门ID")
     name: str = Field(description="部门名称")
     org_type: int = Field(default=1, description="机构类型 1公司；2部门；3小组；4其他")
     sort: int = Field(default=1, description="排序")
     remarks: str = Field(default="", description="备注")
-    status: bool = Field(default=False, description="状态 false正常；true-停用")
+    status: int = Field(default=1, description="状态 1-正常；2-停用")
+    dept_leader_user_ids: List[int] = Field(default=None, exclude=True, description="部门领导-用户ID")
 
-class SysDeptEditParam(BaseModelSchema):
+class SysDeptEditParam(SysDeptAddParam):
     id: int = Field(description="唯一ID")

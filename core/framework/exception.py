@@ -60,7 +60,7 @@ def register_exception(app: FastAPI):
         logger.exception(exc)
         return JSONResponse(
             status_code=exc.status_code,
-            content={"message": exc.msg, "code": exc.code},
+            content={"message": exc.msg, "code": exc.code, "exc_error": exc.error},
         )
 
     @app.exception_handler(StarletteHTTPException)
@@ -84,6 +84,25 @@ def register_exception(app: FastAPI):
 
     @app.exception_handler(RequestValidationError)
     async def validation_exception_handler(request: Request, exc: RequestValidationError):
+        # # 遍历错误信息，替换提示
+        # error_details = []
+        # for error in exc.errors():
+        #     loc = error["loc"]
+        #     msg = error["msg"]
+        #     # 替换 field required 提示
+        #     if msg == "Field required":
+        #         field_name = loc[-1] if loc else "未知字段"
+        #         msg = f"字段 {field_name} 为必填项"
+        #     error_details.append({"field": loc, "message": msg})
+        #
+        # return JSONResponse(
+        #     status_code=422,
+        #     content={
+        #         "status": "error",
+        #         "message": "参数验证失败",
+        #         "errors": error_details
+        #     }
+        # )
         """
         重写请求验证异常处理器
         """
@@ -93,18 +112,23 @@ def register_exception(app: FastAPI):
             print(exc.errors())
         # 打印栈信息，方便追踪排查异常
         logger.exception(exc)
+        error = exc.errors()[0]
         msg = exc.errors()[0].get("msg")
+        # msg = "请求失败，缺少必填项！"
+        loc = error["loc"]
+        # 替换 field required 提示
+        field_name = loc[-1] if loc else "未知字段"
         if msg == "field required" or msg == "Field required":
-            msg = "请求失败，缺少必填项！"
+            msg = f"字段 {field_name} 为必填项"
         elif msg == "value is not a valid list":
             print(exc.errors())
-            msg = f"类型错误，提交参数应该为列表！"
+            msg = f"{field_name}参数应该为集合！"
         elif msg == "value is not a valid int":
-            msg = f"类型错误，提交参数应该为整数！"
+            msg = f"{field_name}参数应该为整数！"
         elif msg == "value could not be parsed to a boolean":
-            msg = f"类型错误，提交参数应该为布尔值！"
+            msg = f"{field_name}参数应该为布尔值！"
         elif msg == "Input should be a valid list":
-            msg = f"类型错误，输入应该是一个有效的列表！"
+            msg = f"{field_name}应该是一个有效的集合！"
         return JSONResponse(
             status_code=200,
             content=jsonable_encoder(

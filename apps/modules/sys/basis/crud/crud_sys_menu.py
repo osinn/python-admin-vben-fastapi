@@ -31,7 +31,7 @@ class CrudSysMenu:
             result = await crud_async_session.db.execute(
                 select(crud_async_session.model_class.id).where(
                     crud_async_session.model_class.is_deleted == False,
-                    crud_async_session.model_class.status == 0
+                    crud_async_session.model_class.status == 1
                 )
             )
             rows = result.scalars().all()
@@ -126,7 +126,7 @@ class CrudSysMenu:
             result = await crud_async_session.db.execute(
                 select(crud_async_session.model_class).where(
                     crud_async_session.model_class.is_deleted == False,
-                    crud_async_session.model_class.status == 0,
+                    crud_async_session.model_class.status == 1,
                     crud_async_session.model_class.type.in_(menu_types)
                 )
             )
@@ -163,7 +163,7 @@ class CrudSysMenu:
                 # 去重
                 select(distinct(crud_async_session.model_class.auth_code)).where(
                     crud_async_session.model_class.is_deleted == False,
-                    crud_async_session.model_class.status == 0,
+                    crud_async_session.model_class.status == 1,
                     crud_async_session.model_class.auth_code.isnot(None),
                     crud_async_session.model_class.auth_code != ""
                 )

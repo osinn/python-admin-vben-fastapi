@@ -18,7 +18,7 @@ async def get_dict_list(sys_dict_page_param: SysDictPageParam,
     page_vo = await get_page_dict_list(sys_dict_page_param, crud_async_session)
     return SuccessResponse(page_vo)
 
-@dict_router.post("/add", summary="新增字典")
+@dict_router.post("/add_dict", summary="新增字典")
 async def add(sys_dict_add_param: SysDictAddParam,
                         crud_async_session: AsyncGenericCRUD = Depends(crud_getter(SysDictModel)),
                         _ = Depends(PreAuthorize(permissions=["system:dict:add"]))
@@ -26,7 +26,7 @@ async def add(sys_dict_add_param: SysDictAddParam,
     await crud_async_session.create(sys_dict_add_param)
     return SuccessResponse("OK")
 
-@dict_router.put("/edit", summary="编辑字典")
+@dict_router.put("/edit_dict", summary="编辑字典")
 async def edit(sys_dict_edit_param: SysDictEditParam,
                         crud_async_session: AsyncGenericCRUD = Depends(crud_getter(SysDictModel)),
                         _ = Depends(PreAuthorize(permissions=["system:dict:edit"]))

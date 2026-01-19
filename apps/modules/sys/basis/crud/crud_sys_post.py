@@ -23,6 +23,8 @@ class CrudSysPost:
                    OR post_code LIKE CONCAT('%', :search_key, '%')
                )
             """)
+        if sys_post_query_param.status is not None:
+            sql.append('and status = :status')
         page_vo = await crud_async_session.page_select_model(" ".join(sql), sys_post_query_param.__dict__, v_schema=SysPostSchema)
         return page_vo
 

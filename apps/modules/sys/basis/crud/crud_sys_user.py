@@ -88,7 +88,7 @@ class CrudSysUser:
                     'role_id': role_id,
                     'role_code': row['role_code'],
                     'role_name': row['role_name'],
-                    'permissions': []
+                    'permissions': [{'permission_code': auth_constant.ALL_PERMISSION}] if is_admin else []
                 }
 
             if row['permission_id']:

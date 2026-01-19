@@ -219,7 +219,7 @@ class AsyncGenericCRUD:
         db_obj = await self.get(id)
         if not db_obj:
             return None
-        update_data = obj_in.model_dump(exclude_unset=True)
+        update_data = obj_in.model_dump()
         user = self.user
         if user and user.get("id", None) is not None:
             update_data["updated_by"] = user.get("id", None)
@@ -229,7 +229,7 @@ class AsyncGenericCRUD:
         return db_obj
 
     async def update(self, obj_in: BaseModel, db_obj) -> Optional[object]:
-        update_data = obj_in.model_dump(exclude_unset=True)
+        update_data = obj_in.model_dump()
         user = self.user
         if user and user.get("id", None) is not None:
             update_data["updated_by"] = user.get("id", None)

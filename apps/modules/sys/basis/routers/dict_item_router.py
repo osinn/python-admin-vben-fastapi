@@ -13,21 +13,21 @@ dict_item_router = APIRouter(prefix="/dict_item")
 async def get_dict_item_list_all_by_dict_id(dict_id: int = Path(description="字典ID"),
                         crud_async_session: AsyncGenericCRUD = Depends(crud_getter(SysDictItemModel))
                         ):
-    await get_dict_item_list_all_of_dict_id(dict_id, crud_async_session)
-    return SuccessResponse("OK")
+    result = await get_dict_item_list_all_of_dict_id(dict_id, crud_async_session)
+    return SuccessResponse(result)
 
-@dict_item_router.post("/add", summary="新增字典项")
+@dict_item_router.post("/add_dict_item", summary="新增字典项")
 async def add(sys_dict_item_add_param: SysDictItemAddParam,
                         crud_async_session: AsyncGenericCRUD = Depends(crud_getter(SysDictItemModel)),
-                        _ = Depends(PreAuthorize(permissions=["system:dictItem:add"]))
+                        # _ = Depends(PreAuthorize(permissions=["system:dictItem:add"]))
                         ):
     await crud_async_session.create(sys_dict_item_add_param)
     return SuccessResponse("OK")
 
-@dict_item_router.put("/edit", summary="编辑字典项")
+@dict_item_router.put("/edit_dict_item", summary="编辑字典项")
 async def edit(sys_dict_item_edit_param: SysDictItemEditParam,
                         crud_async_session: AsyncGenericCRUD = Depends(crud_getter(SysDictItemModel)),
-                        _ = Depends(PreAuthorize(permissions=["system:dictItem:edit"]))
+                        # _ = Depends(PreAuthorize(permissions=["system:dictItem:edit"]))
                         ):
     db_obj = await crud_async_session.get(sys_dict_item_edit_param.id)
     if not db_obj:
@@ -39,7 +39,7 @@ async def edit(sys_dict_item_edit_param: SysDictItemEditParam,
 @dict_item_router.delete("/{dict_id}/delete_dict_item", summary="删除字典项")
 async def delete_dict_item(dict_id: int = Path(description="字典项唯一ID"),
                       crud_async_session: AsyncGenericCRUD = Depends(crud_getter(SysDictItemModel)),
-                      _ = Depends(PreAuthorize(permissions=["system:dictItem:delete"]))
+                      # _ = Depends(PreAuthorize(permissions=["system:dictItem:delete"]))
                       ):
     result: bool = await crud_async_session.delete(dict_id)
     if not result:

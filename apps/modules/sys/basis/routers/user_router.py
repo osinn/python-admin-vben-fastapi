@@ -83,6 +83,12 @@ async def edit_user(sys_user_edit_schema: SysUserEditParam, crud_async_session: 
 
     await CrudSysUser.delete_user_post_and_role_of_user_id(sys_user_edit_schema.id, crud_async_session)
 
+    sql = "delete from tbl_sys_user_role where user_id = :user_id"
+    await crud_async_session.execute_sql(sql, {"user_id": sys_user_edit_schema.id})
+
+    sql = "delete from tbl_sys_user_post where user_id = :user_id"
+    await crud_async_session.execute_sql(sql, {"user_id": sys_user_edit_schema.id})
+
     if sys_user_edit_schema.role_ids:
        roles = [SysUserRoleModel(user_id = sys_user_edit_schema.id, role_id = role_id) for role_id in sys_user_edit_schema.role_ids]
        crud_async_session.db.add_all(roles)

@@ -13,7 +13,7 @@ class SysMenuAddParam(BaseModelSchema):
     path: Optional[str] = Field(description="路由地址")
     redirect: Optional[str] = Field(default=None)
     component: Optional[str] = Field(default=None, description="组件路径")
-    status: Optional[bool] = Field(description="状态 false-正常；true-停用")
+    status: Optional[int] = Field(description="状态 1-正常；2-停用")
     auth_code: Optional[str] = Field(default=None, description="权限标识")
     sort: Optional[int] = Field(description="排序")
     remarks: Optional[str] = Field(default="", description="备注")

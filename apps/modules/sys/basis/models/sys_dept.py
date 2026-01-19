@@ -12,4 +12,4 @@ class SysDeptModel(BaseEntity):
     org_type: Mapped[int] = mapped_column(Integer, comment="机构类型 1公司；2部门；3小组；4其他")
     sort: Mapped[int] = mapped_column(Integer, comment="排序")
     remarks: Mapped[str] = mapped_column(String(512), comment="备注")
-    status: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, comment="状态 false正常；true-停用")
+    status: Mapped[int] = mapped_column(Integer, nullable=False, default=1, comment="状态 1-正常；2-停用")

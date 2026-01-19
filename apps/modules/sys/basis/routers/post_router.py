@@ -23,7 +23,7 @@ async def get_post_list(sys_post_query_param: SysPostQueryParam,
     return SuccessResponse(page_vo)
 
 
-@post_router.post("/add", summary="新增岗位")
+@post_router.post("/add_post", summary="新增岗位")
 async def add(sys_post_add_param: SysPostAddParam,
               crud_async_session: AsyncGenericCRUD = Depends(crud_getter(SysPostModel)),
               _=Depends(PreAuthorize(permissions=["system:post:add"]))
@@ -32,7 +32,7 @@ async def add(sys_post_add_param: SysPostAddParam,
     return SuccessResponse("OK")
 
 
-@post_router.post("/edit", summary="编辑岗位")
+@post_router.put("/edit_post", summary="编辑岗位")
 async def edit(sys_post_edit_param: SysPostEditParam,
                crud_async_session: AsyncGenericCRUD = Depends(crud_getter(SysPostModel)),
                _=Depends(PreAuthorize(permissions=["system:post:edit"]))
