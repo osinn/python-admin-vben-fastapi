@@ -5,6 +5,7 @@ from fastapi import Depends, APIRouter, Request
 from apps.modules.sys.basis.crud.crud_sys_menu import CrudSysMenu
 from apps.modules.sys.basis.models.sys_menu import SysMenuModel
 from apps.modules.sys.basis.schemas.sys_menu import RouteItemSchema
+from core.constants.auth_constant import CACHE_OFFLINE_PREFIX
 from core.framework.auth import Token, LoginAuth
 from core.framework.cache_tools import cache
 from core.framework.crud_async_session import AsyncGenericCRUD, crud_getter
@@ -45,3 +46,9 @@ async def get_route_menu_codes(request: Request, crud_async_session: AsyncGeneri
     user = getattr(request.state, "user", None)
     route_menu_codes: List[str] = await CrudSysMenu.get_route_menu_codes(user["id"], user["is_admin"], crud_async_session)
     return SuccessResponse(route_menu_codes)
+
+@login_auth_router.post("/auth/logout", summary="退出登录", tags=["登录认证"])
+async def logout(request: Request):
+    user = getattr(request.state, "user", None)
+    await cache.delete(CACHE_OFFLINE_PREFIX + user["sub"])
+    return SuccessResponse("OK")

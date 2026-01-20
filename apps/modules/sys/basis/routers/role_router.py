@@ -1,7 +1,7 @@
 from typing import Optional
 
 from fastapi import APIRouter, Depends, Path
-from sqlalchemy import delete, insert, except_
+from sqlalchemy import delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from apps.modules.sys.basis.crud.crud_sys_role import CrudSysRole
@@ -26,13 +26,13 @@ async def get_role_list(sys_role_page_param: SysRolePageParam, crud_async_sessio
 @role_router.get("/get_role_list_all", summary="查询全部角色")
 async def get_role_list_all(status: Optional[int], crud_async_session: AsyncGenericCRUD = Depends(crud_getter(SysRoleModel))):
     sql = [
-        "select * from tbl_sys_role where is_deleted = 0 and status = :status"
+        "select * from tbl_sys_role where is_deleted = 0"
     ]
     param = None
     if status:
         sql.append(" and status = :status")
         param = {"status": status}
-    model_info_all = await crud_async_session.execute_sql(" ".join(sql), param)
+    model_info_all = await crud_async_session.execute_sql(" ".join(sql), param, fetch_data = True)
     return SuccessResponse(model_info_all)
 
 @role_router.post("/add_role", summary="添加角色")

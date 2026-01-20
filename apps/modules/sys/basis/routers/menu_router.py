@@ -74,7 +74,7 @@ async def delete_menu(menu_id: int = Path(description="菜单唯一ID"),
 @menu_router.get("/get_menu_tree_list_all", summary="获取树形菜单")
 async def get_menu_tree_list_all(status: Optional[int] = Query(default=None, description="菜单状态"), crud_async_session: AsyncGenericCRUD = Depends(crud_getter(SysMenuModel))):
     route_item = await CrudSysMenu.get_menu_tree_list_all(crud_async_session, {"status": status}  if status else {})
-    return SuccessResponse(route_item)
+    return SuccessResponse(route_item, by_alias = False)
 
 
 @menu_router.get("/get_assignment_permission_ids_by_role_id/{role_id}", summary="获取角色已分配的权限ID列表")

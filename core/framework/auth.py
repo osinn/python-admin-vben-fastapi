@@ -1,24 +1,26 @@
+import time
 import uuid
 from datetime import timedelta, datetime, timezone
 
 from fastapi.param_functions import Body
 from fastapi import Request, Depends, HTTPException, status
 from pwdlib import PasswordHash
-from annotated_doc import Doc
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from apps.modules.sys.basis.crud.crud_sys_user import CrudSysUser
 from apps.modules.sys.basis.models.sys_user import SysUserModel
 from apps.modules.sys.basis.schemas.sys_user import SysUserSchema
+from apps.modules.sys.monitor.crud.crud_sys_http_log import CrudSysHttpLog
+from apps.modules.sys.monitor.models.sys_http_log import SysHttpLogModel
 from config import settings
 from core.constants import auth_constant
-from core.constants.auth_constant import SUPER_ADMIN_ROLE
+from core.constants.auth_constant import SUPER_ADMIN_ROLE, CACHE_OFFLINE_PREFIX
 from core.framework.crud_async_session import AsyncGenericCRUD, crud_getter
 from core.framework.exception import BizException
 from core.framework.log_tools import logger
 from core.framework.database import db_getter
 
-from typing import Annotated, Any, List
+from typing import Any, Optional
 
 import jwt
 from jwt import InvalidTokenError, ExpiredSignatureError
@@ -26,10 +28,10 @@ from pydantic import BaseModel, Field
 
 from config.settings import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
 from core.utils.JSONUtils import JSONUtils
-from core.framework.sql_alchemy_helper import SQLAlchemyHelper
 from core.framework.cache_tools import cache
 from core.utils.ModelUtils import ModelUtils
 from core.utils.rsa_utils import decrypt_with_private_b64
+from core.utils.web_request_utils import WebRequestUtils
 
 password_hash = PasswordHash.recommended()
 
@@ -62,6 +64,37 @@ class LoginRequestParam(BaseModel):
     )
 
 
+async def deleted_online_user(sub: str):
+    """
+    移除用户登录信息
+    :param sub:
+    :return:
+    """
+    await cache.delete(CACHE_OFFLINE_PREFIX + sub)
+
+
+async def fetch_online_user_all():
+    """
+    拉取所以在线用户信息
+    :return:
+    """
+    online_user_all = await cache.fetch_like(CACHE_OFFLINE_PREFIX + "*")
+    return online_user_all
+
+
+async def get_online_user(sub: str) -> Optional[dict]:
+    """
+    获取缓存在线用户信息
+    :param sub: 登录时分配的sub
+    :return:
+    """
+    online_user = await cache.get(CACHE_OFFLINE_PREFIX + sub)
+    if online_user:
+        return JSONUtils.loads(online_user)
+    else:
+        return None
+
+
 class AuthValidation:
 
     @classmethod
@@ -73,26 +106,28 @@ class AuthValidation:
         return password_hash.hash(password)
 
     @classmethod
+    async def save_online_user(cls, sub: str, user: dict):
+        # redis缓存过期时间,过期时间比jwt 晚30分钟
+        ex_ms = (ACCESS_TOKEN_EXPIRE_MINUTES * 60 * 1000) + 1800000
+        await cache.set(CACHE_OFFLINE_PREFIX + sub, JSONUtils.dumps(user), ex_ms)
+
+    @classmethod
     async def create_access_token(cls, data: Any):
         to_encode = data.copy()
         to_encode.pop('user', None)
         expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-        # to_encode.update({"exp": expire})
-        # 2. 关键修复：将datetime转换为Unix时间戳（秒数）
         to_encode.update({"exp": expire.timestamp()})
         encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-        user_dict = ModelUtils.to_dict(data.get("user"))
-        # user_dict.pop("password")
+        user_dict = data.get("user")
         is_admin = cls.hash_admin(user_dict)
         user_dict["is_admin"] = is_admin
-        # redis缓存过期时间,过期时间比jwt 晚30分钟
-        ex_ms = (ACCESS_TOKEN_EXPIRE_MINUTES * 60 * 1000) + 1800000
-        await cache.set("auth:" + data.get("sub"), JSONUtils.dumps(user_dict), ex_ms)
+        user_dict["sub"] = data["sub"]
+        user_dict["login_time"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        await cls.save_online_user(data.get("sub"), user_dict)
         return encoded_jwt
 
     @classmethod
     async def validate_token(cls, token: str, ):
-        print("验证token")
         credentials_exception = HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="登录超时，请重新登录",
@@ -111,15 +146,15 @@ class AuthValidation:
             payload = cls.parse_token_payload(token)
             if payload:
                 # 删除缓存数据
-                await cache.delete("auth:" + payload.get("sub"))
-            print("获取token异常")
+                await cache.delete(CACHE_OFFLINE_PREFIX + payload.get("sub"))
             raise credentials_exception
-        cache_user_info: str = await cache.get("auth:" + token_key)
+        cache_user_info: str = await cache.get(CACHE_OFFLINE_PREFIX + token_key)
         user = None
         if cache_user_info:
             user = JSONUtils.loads(cache_user_info)
         if user is None:
             raise credentials_exception
+        user["sub"] = payload.get("sub")
         return user
 
     def parse_token_payload(token: str) -> dict | None:
@@ -129,7 +164,6 @@ class AuthValidation:
         :return: 解析后的Payload字典，解析失败返回None
         """
         try:
-            # 第一步：尝试正常解析（校验过期、签名等）
             return jwt.decode(
                 token,
                 SECRET_KEY,
@@ -145,18 +179,16 @@ class AuthValidation:
                 )
                 return payload
             except InvalidTokenError as e:
-                print(f"手动解析过期Token失败：{e}")
+                logger.error(f"手动解析过期Token失败：{e}")
                 return None
         except InvalidTokenError as e:
             # 其他无效token情况（如签名错误、格式错误）
-            print(f"Token无效：{e}")
+            logger.error(f"Token无效：{e}")
             return None
 
     @classmethod
     async def validate_permissions(cls, permissions: set[str] | None = None, user_permissions: set[str] | None = None):
-        print("验证用户权限", permissions)
         if permissions:  # 需要验证权限
-            print("校验")
             if user_permissions:  # 用户是否有分配权限
                 if user_permissions != {auth_constant.ALL_PERMISSION}:  # 是否管理员权限
                     if not (permissions & user_permissions):  # 用户是否拥有指定权限需要的权限
@@ -172,7 +204,6 @@ class AuthValidation:
 
     @classmethod
     async def validate_role_permissions(cls, roles: set[str] | None = None, user_roles: set[str] | None = None):
-        print("验证用户角色权限", roles)
         if roles:  # 需要验证权限
             if user_roles:  # 用户是否有分配权限
                 if not (roles & user_roles):  # 用户是否拥有指定权限需要的权限
@@ -218,34 +249,70 @@ class LoginAuth(AuthValidation):
     async def __call__(self, request: Request,
                        login_request_param: LoginRequestParam = Body(),
                        crud_async_session: AsyncGenericCRUD = Depends(crud_getter(SysUserModel))) -> Token:
-        print("登录", login_request_param)
-
-        user = await crud_async_session.first_model(
-            # 未删除、未锁账号、启用状态
-            "select * from tbl_sys_user where is_deleted = 0 and lock_account = 1 and status = 1 and account = :account",
-            {"account": login_request_param.account},
-            SysUserSchema
+        start_time = time.time()
+        ip = WebRequestUtils.get_client_ip(request)
+        browser_info = WebRequestUtils.get_browser_info(request)
+        sys_http_log = SysHttpLogModel(
+            account=login_request_param.account,
+            ip_address=ip,
+            request_uri=request.url.path,
+            request_method=request.method,
+            business_module="用户登录",
+            module_name="用户登录",
+            source="WEB",
+            log_type="LOGIN",
+            action_desc="用户登录",
+            operate_type="用户登录",
+            browser=browser_info.get("browser_name", None),
+            os=browser_info.get("os_name", None),
+            mobile=browser_info.get("is_mobile", False)
         )
-        if not user:
-            raise BizException(
-                "账号或密码错误",
-                code=status.HTTP_401_UNAUTHORIZED
+        try:
+            user = await crud_async_session.first_model(
+                # 未删除、未锁账号、启用状态
+                "select * from tbl_sys_user where is_deleted = 0 and lock_account = 1 and status = 1 and account = :account",
+                {"account": login_request_param.account},
+                SysUserSchema
             )
-        private_key = await cache.get("rsa:private:" + login_request_param.ticket)
-        password = decrypt_with_private_b64(login_request_param.password, private_key)
-        if not self.verify_password(password, user.password):
-            raise BizException(
-                "账号或密码错误",
-                code=status.HTTP_401_UNAUTHORIZED
-            )
-        user_role_permissions = await CrudSysUser.get_sys_user_permission(user.id, crud_async_session)
-        user.roles = user_role_permissions
-        access_token = await AuthValidation.create_access_token(
-            data={"sub": uuid.uuid4().hex, "user": user}
-        )
-        print("登录成功")
-        return Token(access_token=access_token, token_type="bearer")
+            if not user:
+                raise BizException(
+                    "账号或密码错误",
+                    code=status.HTTP_401_UNAUTHORIZED
+                )
+            private_key = await cache.get("rsa:private:" + login_request_param.ticket)
+            password = decrypt_with_private_b64(login_request_param.password, private_key)
+            if not self.verify_password(password, user.password):
+                raise BizException(
+                    "账号或密码错误",
+                    code=status.HTTP_401_UNAUTHORIZED
+                )
+            user_role_permissions = await CrudSysUser.get_sys_user_permission(user.id, crud_async_session)
+            user.roles = user_role_permissions
 
+            user_dict = ModelUtils.to_dict(user)
+
+            user_dict["browser"] = browser_info["browser_name"]
+            user_dict["operating_system"] = browser_info["os_name"]
+            user_dict["ip"] = ip
+
+            access_token = await AuthValidation.create_access_token(data={"sub": uuid.uuid4().hex, "user": user_dict})
+            sys_http_log.status = 1
+            return Token(access_token=access_token, token_type="bearer")
+        except Exception as e:
+            sys_http_log.status = 2
+            sys_http_log.exception_msg = f"{e}"
+            logger.error(f"登录异常：{e}")
+            raise BizException("登录失败，请联系管理员", code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        finally:
+            end_time = time.time()
+            seconds = end_time - start_time
+            minutes = int(seconds // 60)
+            remaining_seconds = seconds % 60
+            decimal_places = 2
+            format_str = f"{{}}:{{:0{decimal_places + 2}.{decimal_places}f}}"
+            min_sec_str = format_str.format(minutes, remaining_seconds)
+            sys_http_log.execution_time = min_sec_str
+            await CrudSysHttpLog.create_login_log(sys_http_log, crud_async_session)
 
 class AuthAuthorize(AuthValidation):
     """
@@ -254,13 +321,13 @@ class AuthAuthorize(AuthValidation):
 
     async def __call__(self, request: Request,
                        token: str = Depends(settings.oauth2_scheme),
-                       db: AsyncSession = Depends(db_getter)) -> Auth:
-
+                       # db: AsyncSession = Depends(db_getter)
+                       ):
         # token 登录认证
         user = await self.validate_token(token)
         request.state.user = user
-        auth = Auth(user=user, db=db)
-        return auth
+        # auth = Auth(user=user, db=db)
+        return user
 
 
 class PreAuthorize(AuthValidation):
@@ -303,7 +370,6 @@ class PreAuthorize(AuthValidation):
                 if "permission_code" in perm and perm["permission_code"] is not None:
                     permission_codes.add(perm["permission_code"])
         if self.permissions:
-            print("验证用户权限", self.permissions)
             if permission_codes:
                 # 用户权限验证
                 await self.validate_permissions(self.permissions, permission_codes)

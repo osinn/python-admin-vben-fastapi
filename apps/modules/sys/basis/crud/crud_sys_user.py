@@ -88,19 +88,11 @@ class CrudSysUser:
                     'role_id': role_id,
                     'role_code': row['role_code'],
                     'role_name': row['role_name'],
-                    'permissions': [{'permission_code': auth_constant.ALL_PERMISSION}] if is_admin else []
+                    'permissions': [{'permission_code': auth_constant.ALL_PERMISSION}] if row['role_code'] == auth_constant.SUPER_ADMIN_ROLE else []
                 }
 
             if row['permission_id']:
-                """
-                如果存在管理员角色，只将管理员角色设置成全部权限，普通角色不赋值权限编码
-                """
-                if is_admin == True and row.get("role_code") == auth_constant.SUPER_ADMIN_ROLE and not roles[role_id]['permissions']:
-                    # 如果是管理员角色，没有设置过权限编码，则权限编码设置为全部权限编码
-                    roles[role_id]['permissions'].append({
-                        'permission_code': auth_constant.ALL_PERMISSION,
-                    })
-                elif row['permission_code'] and is_admin == False and row.get("role_code") != auth_constant.SUPER_ADMIN_ROLE:
+                if row['permission_code'] and is_admin == False:
                     # 如果不是管理员，则根据角色拥有的权限分组
                     roles[role_id]['permissions'].append({
                         'permission_id': row['permission_id'],

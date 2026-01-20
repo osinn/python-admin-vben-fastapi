@@ -63,7 +63,8 @@ class CrudSysMenu:
                 # else:
                 #     condition = f"{key} == {value}"
                 if value:
-                    filter_conditions.append(key == value)
+                    column = getattr(crud_async_session.model_class, key)
+                    filter_conditions.append(column == value)
             if len(filter_conditions) > 0:
                 stmt = stmt.where(and_(*filter_conditions))
         result = await crud_async_session.db.execute(

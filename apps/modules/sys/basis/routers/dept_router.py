@@ -14,10 +14,10 @@ from core.framework.response import SuccessResponse, ErrorResponse
 
 dept_router = APIRouter(prefix="/dept")
 
-
 @dept_router.post("/add_dept", summary="新增部门")
 async def add(sys_dept_add_param: SysDeptAddParam,
-              crud_async_session: AsyncGenericCRUD = Depends(crud_getter(SysDeptModel))):
+              crud_async_session: AsyncGenericCRUD = Depends(crud_getter(SysDeptModel)),
+              _ = Depends(PreAuthorize(permissions=["system:dept:add"]))):
     sys_dept = await crud_async_session.create(sys_dept_add_param)
     await CrudSysDept.associationDeptLeader(sys_dept.id, sys_dept_add_param.dept_leader_user_ids, crud_async_session)
     return SuccessResponse("OK")
@@ -25,7 +25,8 @@ async def add(sys_dept_add_param: SysDeptAddParam,
 @dept_router.put("/edit_dept", summary="编辑部门")
 @transaction
 async def edit(sys_dept_edit_param: SysDeptEditParam,
-               crud_async_session: AsyncGenericCRUD = Depends(crud_getter(SysDeptModel))):
+               crud_async_session: AsyncGenericCRUD = Depends(crud_getter(SysDeptModel)),
+               _ = Depends(PreAuthorize(permissions=["system:dept:edit"]))):
     db_obj = await crud_async_session.get(sys_dept_edit_param.id)
     if not db_obj:
         return ErrorResponse("部门不存在")
@@ -35,7 +36,8 @@ async def edit(sys_dept_edit_param: SysDeptEditParam,
 
 @dept_router.delete("/{dept_id}/delete_dept", summary="删除部门")
 async def delete_dept(dept_id: int,
-               crud_async_session: AsyncGenericCRUD = Depends(crud_getter(SysDeptModel))):
+               crud_async_session: AsyncGenericCRUD = Depends(crud_getter(SysDeptModel)),
+               _ = Depends(PreAuthorize(permissions=["system:dept:delete"]))):
     result: bool = await crud_async_session.delete(dept_id)
     if not result:
         return ErrorResponse("删除失败")

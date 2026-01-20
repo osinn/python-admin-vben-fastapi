@@ -22,7 +22,7 @@ async def get_config_list(sys_config_page_param: SysConfigPageParam,
 @sys_config_router.post("/add_sys_config", summary="新增系统参数")
 async def get_config_list(sys_config_add_param: SysConfigAddParam,
                         crud_async_session: AsyncGenericCRUD = Depends(crud_getter(SysConfigModel)),
-                        # _ = Depends(PreAuthorize(permissions=["system:config:add"]))
+                        _ = Depends(PreAuthorize(permissions=["system:config:add"]))
                         ):
     await crud_async_session.create(sys_config_add_param)
     return SuccessResponse("OK")
@@ -30,7 +30,7 @@ async def get_config_list(sys_config_add_param: SysConfigAddParam,
 @sys_config_router.put("/edit_sys_config", summary="编辑系统参数")
 async def edit(sys_config_edit_param: SysConfigEditParam,
                         crud_async_session: AsyncGenericCRUD = Depends(crud_getter(SysConfigModel)),
-                        # _ = Depends(PreAuthorize(permissions=["system:config:edit"]))
+                        _ = Depends(PreAuthorize(permissions=["system:config:edit"]))
                         ):
     db_obj = await crud_async_session.get(sys_config_edit_param.id)
     if not db_obj:
@@ -41,7 +41,7 @@ async def edit(sys_config_edit_param: SysConfigEditParam,
 @sys_config_router.delete("/{sys_config_id}/delete_sys_config", summary="删除系统参数")
 async def delete_config(sys_config_id: int = Path(description="系统参数唯一ID"),
                       crud_async_session: AsyncGenericCRUD = Depends(crud_getter(SysConfigModel)),
-                      # _ = Depends(PreAuthorize(permissions=["system:config:delete"]))
+                      _ = Depends(PreAuthorize(permissions=["system:config:delete"]))
                       ):
     result: bool = await crud_async_session.delete(sys_config_id)
     if not result:
@@ -50,7 +50,7 @@ async def delete_config(sys_config_id: int = Path(description="系统参数唯�
 
 @sys_config_router.put("/sys_config_change_status", summary="修改用户状态")
 async def sys_config_change_status(change_status_param: ChangeStatusParam, crud_async_session: AsyncGenericCRUD = Depends(crud_getter(SysConfigModel)),
-                         # _ = Depends(PreAuthorize(permissions=["system:config:changeStatus"]))
+                         _ = Depends(PreAuthorize(permissions=["system:config:changeStatus"]))
                          ):
     result: bool = await crud_async_session.change_status(change_status_param.id, change_status_param.status)
     if not result:

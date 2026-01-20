@@ -29,5 +29,5 @@ class SysMenuCheckExistsParam(BaseModelSchema):
     """
     检查菜单是否存在参数
     """
-    id: Optional[int] = Field(description="菜单ID")
+    id: Optional[int] = Field(default=None, description="菜单ID")
     key: Optional[str] = Field(default="", description="检查值是否存在")

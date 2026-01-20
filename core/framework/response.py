@@ -31,27 +31,35 @@ def _format_datetime(obj: Any) -> Any:
 
 # 统一返回数据格式模型（核心）
 class ApiResponse(BaseModel, Generic[T]):
-    code: int = 200                # 业务状态码，默认200成功
-    data: Union[T, list] = []      # 数据体，默认空列表，支持任意类型
-    message: str = ""              # 提示信息，默认空字符串
+    code: int = 200  # 业务状态码，默认200成功
+    data: Union[T, list] = []  # 数据体，默认空列表，支持任意类型
+    message: str = ""  # 提示信息，默认空字符串
+
     class Config:
         arbitrary_types_allowed = True
 
+    # 移除写死的 by_alias=False，改为通过 kwargs 接收
     def model_dump(self, *args, **kwargs) -> Dict[str, Any]:
-        data = super().model_dump(*args, **kwargs, by_alias=True)
+        # 关键：删除 *args（model_dump不支持位置参数），仅传递 kwargs
+        data = super().model_dump(**kwargs)
         return _format_datetime(data)
 
     def model_dump_json(self, *args, **kwargs) -> str:
-        data = self.model_dump(*args, **kwargs, by_alias=True)
-        return JSONUtils.dumps(data, default=str)  # default=str 防止意外类型
+        # 同样删除 *args，仅传递 kwargs
+        data = self.model_dump(**kwargs)
+        return JSONUtils.dumps(data, default=str)
 
+
+# 改造后的 SuccessResponse
 class SuccessResponse(Response):
+    # 新增 by_alias 参数，默认值设为 False（保持原有默认行为）
+    def __init__(self, data=None, message="success", code=http.HTTP_SUCCESS,
+                 status=http_status.HTTP_200_OK, by_alias=True, **kwargs):
+        # 调用 model_dump 时，把 by_alias 传入 kwargs
+        api_response = ApiResponse(code=code, data=data, message=message)
+        content = api_response.model_dump(by_alias=by_alias)
+        super().__init__(content=content, status_code=status)
 
-    def __init__(self, data=None, message="success", code=http.HTTP_SUCCESS, status=http_status.HTTP_200_OK, **kwargs):
-        super().__init__(content=ApiResponse(code=200, data=data, message=message).model_dump(), status_code=status)
-# def success_response(data: Any = [], message: str = "") -> JSONResponse:
-#     res = ApiResponse(code=200, data=data, message=message)
-#     return JSONResponse(content=res.dict(), headers={"X-Request-Id": "xxx-xxx"})
 
 class ErrorResponse(Response):
     """

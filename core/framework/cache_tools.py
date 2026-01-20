@@ -1,6 +1,8 @@
-from typing import Any
+from typing import Any, Optional
 
 from redis.asyncio import Redis
+
+from core.utils.JSONUtils import JSONUtils
 
 
 class Cache:
@@ -12,7 +14,7 @@ class Cache:
         return cls._instance
 
     def __init__(self):
-        self.redis_connect = None
+        self.redis_connect: Optional[Redis] = None
 
     def init_redis(self, redis: Redis):
         self.redis_connect = redis
@@ -35,6 +37,15 @@ class Cache:
 
     async def delete(self, key: str) -> Any:
         return await self.redis_connect.delete(key)
+
+    async def fetch_like(self, pattern) -> Any:
+        self.redis_connect.keys()
+        keys = await self.redis_connect.keys(pattern)
+        data_list = []
+        for key in keys:
+            cache_data = await self.get(key)
+            data_list.append(JSONUtils.loads(cache_data))
+        return data_list
 
 # 全局实例
 cache = Cache()

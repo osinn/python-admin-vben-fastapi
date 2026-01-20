@@ -11,7 +11,7 @@
  Target Server Version : 50744 (5.7.44)
  File Encoding         : 65001
 
- Date: 19/01/2026 18:04:33
+ Date: 20/01/2026 18:12:49
 */
 
 SET NAMES utf8mb4;
@@ -259,6 +259,49 @@ INSERT INTO `tbl_sys_dict_item` (`id`, `dict_id`, `dict_item_code`, `dict_item_n
 COMMIT;
 
 -- ----------------------------
+-- Table structure for tbl_sys_http_log
+-- ----------------------------
+DROP TABLE IF EXISTS `tbl_sys_http_log`;
+CREATE TABLE `tbl_sys_http_log` (
+  `id` bigint(20) NOT NULL,
+  `user_id` bigint(20) DEFAULT NULL COMMENT '当前登录用户id',
+  `account` varchar(20) DEFAULT NULL COMMENT '当前登录用户账号',
+  `nickname` varchar(255) DEFAULT NULL COMMENT '当前登录用户昵称',
+  `ip_address` varchar(50) DEFAULT NULL COMMENT 'IP地址',
+  `ip_address_attr` varchar(100) DEFAULT NULL COMMENT 'IP地址归属地',
+  `request_uri` varchar(255) DEFAULT NULL COMMENT '请求资源',
+  `request_headers` varchar(30) DEFAULT NULL COMMENT '请求头',
+  `request_params` text COMMENT '请求参数',
+  `result_data` text COMMENT '响应数据',
+  `request_method` varchar(30) NOT NULL COMMENT '请求类型：POST/GET',
+  `class_method` varchar(255) DEFAULT NULL COMMENT '被调方法',
+  `business_module` varchar(50) NOT NULL COMMENT '业务模块：业务模块主要是用在业务中台，区分业务，例如车辆模块、商城模块',
+  `module_name` varchar(255) NOT NULL COMMENT '日志模块名称 业务模块下面的具体模块菜单-例如-用户管理',
+  `source` varchar(50) NOT NULL COMMENT '日志来源',
+  `log_type` varchar(50) NOT NULL COMMENT '日志类型',
+  `action_desc` varchar(255) NOT NULL DEFAULT '' COMMENT '动作描述',
+  `status` tinyint(1) NOT NULL DEFAULT '1' COMMENT '状态,1-成功，2-失败',
+  `operate_type` varchar(30) NOT NULL DEFAULT 'OTHER' COMMENT '操作类型，例如增删改查、登录',
+  `execution_time` varchar(100) NOT NULL DEFAULT '0' COMMENT '执行耗时(毫秒单位)',
+  `exception_msg` text COMMENT '异常信息',
+  `browser` varchar(100) NOT NULL DEFAULT '' COMMENT '浏览器',
+  `os` varchar(100) NOT NULL DEFAULT '' COMMENT '操作系统',
+  `mobile` tinyint(1) NOT NULL DEFAULT '1' COMMENT '是否是移动端请求，1-是，2-不是',
+  `created_time` datetime NOT NULL COMMENT '创建时间',
+  PRIMARY KEY (`id`) USING BTREE,
+  KEY `index_log` (`user_id`,`account`,`nickname`,`business_module`,`source`,`log_type`,`module_name`,`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='系统请求日志';
+
+-- ----------------------------
+-- Records of tbl_sys_http_log
+-- ----------------------------
+BEGIN;
+INSERT INTO `tbl_sys_http_log` (`id`, `user_id`, `account`, `nickname`, `ip_address`, `ip_address_attr`, `request_uri`, `request_headers`, `request_params`, `result_data`, `request_method`, `class_method`, `business_module`, `module_name`, `source`, `log_type`, `action_desc`, `status`, `operate_type`, `execution_time`, `exception_msg`, `browser`, `os`, `mobile`, `created_time`) VALUES (3133418673658753030, NULL, 'admin', NULL, '127.0.0.1', NULL, '/api/auth/login', NULL, NULL, NULL, 'POST', NULL, '用户登录', '用户登录', 'WEB', 'LOGIN', '用户登录', 2, '用户登录', '0:2.3', NULL, 'Chrome', 'Mac OS X', 0, '2026-01-20 09:51:49');
+INSERT INTO `tbl_sys_http_log` (`id`, `user_id`, `account`, `nickname`, `ip_address`, `ip_address_attr`, `request_uri`, `request_headers`, `request_params`, `result_data`, `request_method`, `class_method`, `business_module`, `module_name`, `source`, `log_type`, `action_desc`, `status`, `operate_type`, `execution_time`, `exception_msg`, `browser`, `os`, `mobile`, `created_time`) VALUES (3133420233704960006, NULL, 'admin', NULL, '127.0.0.1', NULL, '/api/auth/login', NULL, NULL, NULL, 'POST', NULL, '用户登录', '用户登录', 'WEB', 'LOGIN', '用户登录', 2, '用户登录', '0:2.54', NULL, 'Chrome', 'Mac OS X', 0, '2026-01-20 09:53:22');
+INSERT INTO `tbl_sys_http_log` (`id`, `user_id`, `account`, `nickname`, `ip_address`, `ip_address_attr`, `request_uri`, `request_headers`, `request_params`, `result_data`, `request_method`, `class_method`, `business_module`, `module_name`, `source`, `log_type`, `action_desc`, `status`, `operate_type`, `execution_time`, `exception_msg`, `browser`, `os`, `mobile`, `created_time`) VALUES (3133425353624743942, NULL, 'admin', NULL, '127.0.0.1', NULL, '/api/auth/login', NULL, NULL, NULL, 'POST', NULL, '用户登录', '用户登录', 'WEB', 'LOGIN', '用户登录', 1, '用户登录', '0:0.28', NULL, 'Chrome', 'Mac OS X', 0, '2026-01-20 09:58:27');
+COMMIT;
+
+-- ----------------------------
 -- Table structure for tbl_sys_menu
 -- ----------------------------
 DROP TABLE IF EXISTS `tbl_sys_menu`;
@@ -281,7 +324,7 @@ CREATE TABLE `tbl_sys_menu` (
   `updated_time` datetime DEFAULT NULL COMMENT '更新时间',
   `is_deleted` tinyint(1) NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=1964898813045444611 DEFAULT CHARSET=utf8mb4 COMMENT='菜单表 ';
+) ENGINE=InnoDB AUTO_INCREMENT=3133052898641014791 DEFAULT CHARSET=utf8mb4 COMMENT='菜单表 ';
 
 -- ----------------------------
 -- Records of tbl_sys_menu
@@ -358,7 +401,8 @@ INSERT INTO `tbl_sys_menu` (`id`, `type`, `name`, `parent_id`, `path`, `redirect
 INSERT INTO `tbl_sys_menu` (`id`, `type`, `name`, `parent_id`, `path`, `redirect`, `component`, `status`, `auth_code`, `sort`, `remarks`, `meta`, `created_by`, `created_time`, `updated_by`, `updated_time`, `is_deleted`) VALUES (1963450203489513473, 'button', '新增参数', 1963449802404999169, NULL, NULL, NULL, 1, 'ai:model:option:add', 1, NULL, '{\"icon\":\"carbon:security\",\"activeIcon\":\"carbon:security\",\"title\":\"新增参数\"}', 1401043674048851970, '2025-09-04 11:53:02', NULL, NULL, 0);
 INSERT INTO `tbl_sys_menu` (`id`, `type`, `name`, `parent_id`, `path`, `redirect`, `component`, `status`, `auth_code`, `sort`, `remarks`, `meta`, `created_by`, `created_time`, `updated_by`, `updated_time`, `is_deleted`) VALUES (1963450286234742785, 'button', '编辑参数', 1963449802404999169, NULL, NULL, NULL, 1, 'ai:model:option:edit', 1, NULL, '{\"icon\":\"carbon:security\",\"activeIcon\":\"carbon:security\",\"title\":\"编辑参数\"}', 1401043674048851970, '2025-09-04 11:53:22', NULL, NULL, 0);
 INSERT INTO `tbl_sys_menu` (`id`, `type`, `name`, `parent_id`, `path`, `redirect`, `component`, `status`, `auth_code`, `sort`, `remarks`, `meta`, `created_by`, `created_time`, `updated_by`, `updated_time`, `is_deleted`) VALUES (1963450416157503489, 'button', '删除参数', 1963449802404999169, NULL, NULL, NULL, 1, 'ai:model:option:delete', 1, NULL, '{\"icon\":\"carbon:security\",\"activeIcon\":\"carbon:security\",\"title\":\"删除参数\"}', 1401043674048851970, '2025-09-04 11:53:53', NULL, NULL, 0);
-INSERT INTO `tbl_sys_menu` (`id`, `type`, `name`, `parent_id`, `path`, `redirect`, `component`, `status`, `auth_code`, `sort`, `remarks`, `meta`, `created_by`, `created_time`, `updated_by`, `updated_time`, `is_deleted`) VALUES (1964898813045444610, 'menu', '知识库', 1954720741071618050, '/knowledge', NULL, '/ai/knowledge/list', 1, 'ai:knowledge:list', -1, NULL, '{\"icon\":\"carbon:security\",\"activeIcon\":\"carbon:security\",\"title\":\"知识库\",\"keepAlive\":true,\"affixTab\":true}', 1401043674048851970, '2025-09-08 11:49:18', 1401043674048851970, '2025-09-11 08:41:20', 0);
+INSERT INTO `tbl_sys_menu` (`id`, `type`, `name`, `parent_id`, `path`, `redirect`, `component`, `status`, `auth_code`, `sort`, `remarks`, `meta`, `created_by`, `created_time`, `updated_by`, `updated_time`, `is_deleted`) VALUES (1964898813045444610, 'button', '知识库1', 1954720741071618050, '/knowledge', NULL, '/ai/knowledge/list', 1, 'sssssss', 1, '', '{\"icon\":\"carbon:security\",\"active_icon\":\"carbon:security\",\"title\":\"知识库1\",\"badge_type\":\"normal\",\"badge\":\"asd\",\"badge_variants\":\"warning\",\"keep_alive\":true,\"affix_tab\":true,\"hide_in_menu\":true,\"hide_children_in_menu\":true,\"hide_in_breadcrumb\":true,\"hide_in_tab\":true}', 1401043674048851970, '2025-09-08 11:49:18', 1401043674048851970, '2026-01-20 03:42:34', 0);
+INSERT INTO `tbl_sys_menu` (`id`, `type`, `name`, `parent_id`, `path`, `redirect`, `component`, `status`, `auth_code`, `sort`, `remarks`, `meta`, `created_by`, `created_time`, `updated_by`, `updated_time`, `is_deleted`) VALUES (3133052898641014790, 'menu', '演示', 1954720741071618050, '/knowledge2', NULL, '/ai/knowledge/list', 1, 'sssssss', 1, '', '{\"icon\":\"carbon:security\",\"active_icon\":\"carbon:security\",\"title\":\"演示\",\"badge_type\":\"dot\",\"badge_variants\":\"destructive\",\"keep_alive\":true,\"affix_tab\":true,\"hide_in_menu\":false,\"hide_children_in_menu\":false}', 1401043674048851970, '2026-01-20 03:48:27', 1401043674048851970, '2026-01-20 03:50:11', 1);
 COMMIT;
 
 -- ----------------------------
@@ -426,7 +470,7 @@ CREATE TABLE `tbl_sys_role_menu` (
   `role_id` bigint(20) NOT NULL COMMENT '角色ID',
   `menu_id` bigint(20) NOT NULL COMMENT '菜单ID',
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=3117222184448258056 DEFAULT CHARSET=utf8mb4 COMMENT='角色菜单表';
+) ENGINE=InnoDB AUTO_INCREMENT=3133224360479911943 DEFAULT CHARSET=utf8mb4 COMMENT='角色菜单表';
 
 -- ----------------------------
 -- Records of tbl_sys_role_menu
@@ -434,8 +478,7 @@ CREATE TABLE `tbl_sys_role_menu` (
 BEGIN;
 INSERT INTO `tbl_sys_role_menu` (`id`, `role_id`, `menu_id`) VALUES (1, 1401043545271136258, 1406063931784179714);
 INSERT INTO `tbl_sys_role_menu` (`id`, `role_id`, `menu_id`) VALUES (3, 1401043545271136258, 1406063931784179715);
-INSERT INTO `tbl_sys_role_menu` (`id`, `role_id`, `menu_id`) VALUES (4, 1401043545271136259, 1406063931784179714);
-INSERT INTO `tbl_sys_role_menu` (`id`, `role_id`, `menu_id`) VALUES (5, 1401043545271136259, 1406063931784179715);
+INSERT INTO `tbl_sys_role_menu` (`id`, `role_id`, `menu_id`) VALUES (3133224360479911942, 1401043545271136259, 1406063931784179714);
 COMMIT;
 
 -- ----------------------------
@@ -477,7 +520,7 @@ INSERT INTO `tbl_sys_user` (`id`, `account`, `password`, `psw_modified`, `nickna
 INSERT INTO `tbl_sys_user` (`id`, `account`, `password`, `psw_modified`, `nickname`, `avatar`, `email`, `phone`, `staff_number`, `birthday`, `sex`, `dept_id`, `lock_account`, `sort`, `remarks`, `status`, `is_default`, `is_deleted`, `created_by`, `created_time`, `updated_by`, `updated_time`) VALUES (3115958858976161798, 'demo1', '$argon2id$v=19$m=65536,t=3,p=4$6NWBgszIVo/8S3DqPF+Pow$C0ueDUt7TUXk359qYOMhIsX28dfaKtwmeJc1GzE60JA', 1, '张三', NULL, NULL, NULL, NULL, NULL, 3, NULL, 1, 0, NULL, 1, 2, 0, 1401043674048851970, '2026-01-08 08:47:03', NULL, NULL);
 INSERT INTO `tbl_sys_user` (`id`, `account`, `password`, `psw_modified`, `nickname`, `avatar`, `email`, `phone`, `staff_number`, `birthday`, `sex`, `dept_id`, `lock_account`, `sort`, `remarks`, `status`, `is_default`, `is_deleted`, `created_by`, `created_time`, `updated_by`, `updated_time`) VALUES (3115958901909057542, 'demo2', '$argon2id$v=19$m=65536,t=3,p=4$tv0vKgaJs71wPEfvXDD9ig$NebdUy/0LlgfOcrsG6DNUpEY1mdxikmqfKkzemlG7Zk', 1, '张三', NULL, NULL, NULL, NULL, NULL, 3, NULL, 1, 0, NULL, 1, 2, 0, 1401043674048851970, '2026-01-08 08:47:05', NULL, NULL);
 INSERT INTO `tbl_sys_user` (`id`, `account`, `password`, `psw_modified`, `nickname`, `avatar`, `email`, `phone`, `staff_number`, `birthday`, `sex`, `dept_id`, `lock_account`, `sort`, `remarks`, `status`, `is_default`, `is_deleted`, `created_by`, `created_time`, `updated_by`, `updated_time`) VALUES (3115958950680424454, 'demo3', '$argon2id$v=19$m=65536,t=3,p=4$7nQ6Wpg+BU9p9Y6uZmErUA$WNverpCoCIyg26fF9CM9Nx0NQXsPvXBrlCGDFSDXI+E', 1, '张三', NULL, NULL, NULL, NULL, NULL, 3, NULL, 1, 0, NULL, 1, 2, 0, 1401043674048851970, '2026-01-08 08:47:08', NULL, NULL);
-INSERT INTO `tbl_sys_user` (`id`, `account`, `password`, `psw_modified`, `nickname`, `avatar`, `email`, `phone`, `staff_number`, `birthday`, `sex`, `dept_id`, `lock_account`, `sort`, `remarks`, `status`, `is_default`, `is_deleted`, `created_by`, `created_time`, `updated_by`, `updated_time`) VALUES (3127353201792217094, 'osinn', '', 1, '开源客栈', NULL, '617474214@qq.com', '13600000000', '002', '2026-01-16 00:00:00', 1, 1918556212432396290, 1, 2, 'sa', 1, 2, 0, 1401043674048851970, '2026-01-16 05:26:18', 1401043674048851970, '2026-01-16 05:43:00');
+INSERT INTO `tbl_sys_user` (`id`, `account`, `password`, `psw_modified`, `nickname`, `avatar`, `email`, `phone`, `staff_number`, `birthday`, `sex`, `dept_id`, `lock_account`, `sort`, `remarks`, `status`, `is_default`, `is_deleted`, `created_by`, `created_time`, `updated_by`, `updated_time`) VALUES (3127353201792217094, 'osinn', '', 1, '开源客栈', NULL, '617474214@qq.com', '13600000000', '002', '2026-01-16 00:00:00', 1, 1918556212432396290, 1, 2, 'sa', 2, 2, 0, 1401043674048851970, '2026-01-16 05:26:18', 1401043674048851970, '2026-01-20 03:05:24');
 INSERT INTO `tbl_sys_user` (`id`, `account`, `password`, `psw_modified`, `nickname`, `avatar`, `email`, `phone`, `staff_number`, `birthday`, `sex`, `dept_id`, `lock_account`, `sort`, `remarks`, `status`, `is_default`, `is_deleted`, `created_by`, `created_time`, `updated_by`, `updated_time`) VALUES (3127359471555276806, 'osinn1', '', 1, '开源客栈1', NULL, '617474211@qq.com', '13600000000', '003', '2026-01-16 00:00:00', 1, 1918556212432396290, 1, 2, 'sa', 1, 2, 0, 1401043674048851970, '2026-01-16 05:32:32', 1401043674048851970, '2026-01-16 05:42:54');
 INSERT INTO `tbl_sys_user` (`id`, `account`, `password`, `psw_modified`, `nickname`, `avatar`, `email`, `phone`, `staff_number`, `birthday`, `sex`, `dept_id`, `lock_account`, `sort`, `remarks`, `status`, `is_default`, `is_deleted`, `created_by`, `created_time`, `updated_by`, `updated_time`) VALUES (3127371352793772038, 'osinn4', '', 1, '开源客栈4', NULL, NULL, NULL, NULL, NULL, 1, 1406955981362733058, 1, 1, NULL, 1, 2, 0, 1401043674048851970, '2026-01-16 05:44:20', 1401043674048851970, '2026-01-16 08:29:13');
 COMMIT;
