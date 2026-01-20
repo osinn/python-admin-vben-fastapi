@@ -9,13 +9,13 @@ class SysMenuAddParam(BaseModelSchema):
 
     type: Optional[str] = Field(description="菜单类型 dir目录；menu菜单；button按钮")
     name: Optional[str] = Field(description="菜单名称")
-    parent_id: Optional[int] = Field(default=None, description="上级菜单")
+    parent_id: Optional[int] = Field(default=0, init=True, description="上级菜单")
     path: Optional[str] = Field(description="路由地址")
     redirect: Optional[str] = Field(default=None)
     component: Optional[str] = Field(default=None, description="组件路径")
     status: Optional[int] = Field(description="状态 1-正常；2-停用")
     auth_code: Optional[str] = Field(default=None, description="权限标识")
-    sort: Optional[int] = Field(description="排序")
+    sort: Optional[int] = Field(default=1, init=True, description="排序")
     remarks: Optional[str] = Field(default="", description="备注")
     meta: Optional[str] = Field(default=None)
 

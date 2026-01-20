@@ -17,7 +17,10 @@ menu_router = APIRouter(prefix="/menu")
 @menu_router.post("/name-exists", summary="检查菜单名称是否存在")
 async def name_exists(sys_menu_check_exists_schema: SysMenuCheckExistsParam,
                       crud_async_session: AsyncGenericCRUD = Depends(crud_getter(SysMenuModel))):
-    stmt = select(exists().where(SysMenuModel.name == sys_menu_check_exists_schema.key))
+    stmt = exists().where(SysMenuModel.name == sys_menu_check_exists_schema.key)
+    if sys_menu_check_exists_schema.id:
+        stmt = stmt.where(SysMenuModel.id != sys_menu_check_exists_schema.id)
+    stmt = select(stmt)
     result = await crud_async_session.db.execute(stmt)
     result_value = result.scalar()
     return SuccessResponse(result_value)
@@ -26,13 +29,16 @@ async def name_exists(sys_menu_check_exists_schema: SysMenuCheckExistsParam,
 @menu_router.post("/path-exists", summary="检查菜单路径是否存在")
 async def path_exists(sys_menu_check_exists_schema: SysMenuCheckExistsParam,
                       crud_async_session: AsyncGenericCRUD = Depends(crud_getter(SysMenuModel))):
-    stmt = select(exists().where(SysMenuModel.path == sys_menu_check_exists_schema.key))
+    stmt = exists().where(SysMenuModel.path == sys_menu_check_exists_schema.key)
+    if sys_menu_check_exists_schema.id:
+        stmt = stmt.where(SysMenuModel.id != sys_menu_check_exists_schema.id)
+    stmt = select(stmt)
     result = await crud_async_session.db.execute(stmt)
     result_value = result.scalar()
     return SuccessResponse(result_value)
 
 
-@menu_router.post("/add", summary="添加菜单")
+@menu_router.post("/add_menu", summary="添加菜单")
 async def create_menu(sys_menu_add_schema: SysMenuAddParam,
                       crud_async_session: AsyncGenericCRUD = Depends(crud_getter(SysMenuModel)),
                       _ = Depends(PreAuthorize(permissions=["system:menu:add"]))
@@ -41,7 +47,7 @@ async def create_menu(sys_menu_add_schema: SysMenuAddParam,
     return SuccessResponse("OK")
 
 
-@menu_router.put("/edit", summary="编辑菜单")
+@menu_router.put("/edit_menu", summary="编辑菜单")
 async def edit_menu(sys_menu_edit_schema: SysMenuEditParam,
                     crud_async_session: AsyncGenericCRUD = Depends(crud_getter(SysMenuModel)),
                     _ = Depends(PreAuthorize(permissions=["system:menu:edit"]))
@@ -67,7 +73,7 @@ async def delete_menu(menu_id: int = Path(description="菜单唯一ID"),
 
 @menu_router.get("/get_menu_tree_list_all", summary="获取树形菜单")
 async def get_menu_tree_list_all(status: Optional[int] = Query(default=None, description="菜单状态"), crud_async_session: AsyncGenericCRUD = Depends(crud_getter(SysMenuModel))):
-    route_item = await CrudSysMenu.get_menu_tree_list_all(crud_async_session, {"status": status})
+    route_item = await CrudSysMenu.get_menu_tree_list_all(crud_async_session, {"status": status}  if status else {})
     return SuccessResponse(route_item)
 
 
