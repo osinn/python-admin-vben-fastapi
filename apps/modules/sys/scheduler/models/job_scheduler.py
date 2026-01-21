@@ -15,3 +15,4 @@ class JobSchedulerModel(BaseEntity):
     alarm_email: Mapped[str] = mapped_column(String(255), comment="报警邮件")
     executor_handler: Mapped[str] = mapped_column(String(255), nullable=False, comment="执行器任务handler(调用函数名称)")
     executor_param: Mapped[str] = mapped_column(String(512), comment="执行器任务参数")
+    job_status: Mapped[int] = mapped_column(Integer, nullable=False, comment="任务调度状态，1-运行，2-暂停")

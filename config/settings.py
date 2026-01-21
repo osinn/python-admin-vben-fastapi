@@ -12,6 +12,7 @@ from core.framework.cache_tools import cache
 from core.framework.log_tools import logger
 from core.framework.tools import import_modules_async
 from core.framework.scheduler_tools import job_scheduler, scheduler_manager
+from core.utils.ip_utils_ip2region import ip_location_service
 
 """安全警告: 不要在生产中打开调试运行!"""
 
@@ -68,9 +69,9 @@ async def lifespan(app: FastAPI):
     # yield 之前：进入上下文时执行的代码（设置/初始化）
     # yield 之后：退出上下文时执行的代码（清理/关闭）
     yield
-
     # 应用程序关闭时执行
     await import_modules_async(EVENTS, "全局事件", app=app, status=False)
+    ip_location_service.close()
 
 # 连接redis
 async def connect_redis(app: FastAPI, status: bool):

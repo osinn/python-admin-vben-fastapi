@@ -235,6 +235,11 @@ class SchedulerManager:
             job_scheduler_model.executor_param = kwargs["executor_param"]
             job_scheduler_model.executor_handler = kwargs["executor_handler"]
 
+            if task_info["is_run"] == False:
+                job_scheduler_model.job_status = 2
+            else:
+                job_scheduler_model.job_status = 1
+
             if isinstance(job_scheduler_model.executor_param, dict):
                 job_scheduler_model.executor_param = JSONUtils.dumps(job_scheduler_model.executor_param)
 

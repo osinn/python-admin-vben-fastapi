@@ -22,7 +22,7 @@ from core.framework.scheduler_tools import job_task
 #     name="监控任务",
 #     kwargs={"x": 3}
 # )
-@job_task(name="cron_job任务", cron_expr="*/1 * * * *", kwargs={"x": 3}, is_run=False)
+@job_task(name="cron_job任务", cron_expr="*/1 * * * *", kwargs={"x": 3})
 async def sync_job(**kwargs):
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     print(f"[cron_job] 执行时间: {now} ====>", kwargs)

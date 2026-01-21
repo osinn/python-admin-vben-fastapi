@@ -1,6 +1,7 @@
-from typing import Optional
+from typing import Optional, Union
 from pydantic import Field
 from core.framework.common_schemas import BaseSchema
+
 
 class JobSchedulerSchema(BaseSchema):
 
@@ -13,3 +14,5 @@ class JobSchedulerSchema(BaseSchema):
     alarm_email: Optional[str] = Field(default=None, description="报警邮件")
     executor_handler: Optional[str] = Field(default=None, description="执行器任务handler(调用函数名称)")
     executor_param: Optional[str] = Field(default=None, description="执行器任务参数")
+    job_status: Optional[int] = Field(default=None, description="任务调度状态，1-运行，2-暂停")
+    next_run_time: Union[int, float, None] = Field(default=None, description="下次执行时间")

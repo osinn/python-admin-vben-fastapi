@@ -1,6 +1,6 @@
 from typing import Optional, Dict, Any
+
 from user_agents import parse
-import ip2region.searcher as xdb
 
 class WebRequestUtils:
     """Web请求工具类：封装获取客户端IP、浏览器信息等功能"""
@@ -124,25 +124,34 @@ class WebRequestUtils:
             "client_ip": WebRequestUtils.get_client_ip(request),
             "browser_info": WebRequestUtils.get_browser_info(request)
         }
-
-    @staticmethod
-    def get_ip_address_attr():
-        pass
-        # # 1，使用上述的 version 和 db_path 创建完全基于文件的查询对象
-        # try:
-        #     searcher = xdb.new_with_file_only(version, db_path)
-        # except Exception as e:
-        #     print(f"failed to new_with_file_only: {str(e)}")
-        #     return
-        #
-        # # 2、查询，IPv4 或者 IPv6 的地址都是同一个接口
-        # ip = "1.2.3.4"
-        # # ip = "240e:3b7:3272:d8d0:db09:c067:8d59:539e"  // IPv6
-        # try:
-        #     region = searcher.search(ip)
-        #     print(f"search({ip}): {{region: {region}, io_count: {searcher.get_io_count()}}}")
-        # except Exception as e:
-        #     print(f"failed to search: {str(e)}")
-        #
-        # # 3、关闭资源
-        # searcher.close()
+#
+#     @staticmethod
+#     def get_ip_address_attr(ip: str) -> Optional[str]:
+#         """
+#         获取IP归属地
+#         :param ip: IP地址
+#         :return: 返回IP归属地
+#         """
+#         try:
+#             db_path = "../../lib/ip2region_v4.xdb"
+#             version = util.IPv4
+#             searcher = xdb.new_with_file_only(version, db_path)
+#         except Exception as e:
+#             logger.error(f"ip库加载失败: {str(e)}")
+#             return None
+#         try:
+#             region = searcher.search(ip)
+#             if "内网IP" in region:
+#                 _, _, ip_address_attr, _ = region.split('|')
+#                 return ip_address_attr
+#             else:
+#                 return region
+#         except Exception as e:
+#             logger.error(f"ip地址归属地搜索异常: {str(e)}")
+#         finally:
+#             searcher.close()
+#
+#
+# if __name__ == "__main__":
+#     WebRequestUtils.get_ip_address_attr("127.0.0.1")
+#     # WebRequestUtils.get_ip_address_attr("223.198.165.152")

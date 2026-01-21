@@ -7,7 +7,13 @@ async def fetch_job_scheduler_list(job_scheduler_page_param: JobSchedulerPagePar
                         crud_async_session: AsyncGenericCRUD):
     sql = [
         """
-        select * from tbl_job_scheduler where is_deleted = false
+        SELECT
+            js.*,
+            j.next_run_time
+        FROM
+            tbl_job_scheduler js LEFT JOIN apscheduler_jobs j ON j.id = js.job_id
+        WHERE
+            js.is_deleted = 0
         """
     ]
 

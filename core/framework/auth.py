@@ -30,6 +30,7 @@ from config.settings import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
 from core.utils.JSONUtils import JSONUtils
 from core.framework.cache_tools import cache
 from core.utils.ModelUtils import ModelUtils
+from core.utils.ip_utils_ip2region import ip_location_service
 from core.utils.rsa_utils import decrypt_with_private_b64
 from core.utils.web_request_utils import WebRequestUtils
 
@@ -265,7 +266,8 @@ class LoginAuth(AuthValidation):
             operate_type="用户登录",
             browser=browser_info.get("browser_name", None),
             os=browser_info.get("os_name", None),
-            mobile=browser_info.get("is_mobile", False)
+            mobile=browser_info.get("is_mobile", False),
+            ip_address_attr=ip_location_service.get_ip_address_attr(ip)
         )
         try:
             user = await crud_async_session.first_model(

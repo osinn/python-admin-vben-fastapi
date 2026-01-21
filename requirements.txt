@@ -8,6 +8,7 @@ asyncmy==0.2.10
 certifi==2025.11.12
 cffi==2.0.0
 click==8.3.1
+cryptography==46.0.3
 dnspython==2.8.0
 email-validator==2.3.0
 fastapi==0.124.2
@@ -28,6 +29,7 @@ MarkupSafe==3.0.3
 mdurl==0.1.2
 orjson==3.11.5
 pwdlib==0.3.0
+py-ip2region==3.0.2
 pycparser==2.23
 pydantic==2.12.5
 pydantic_core==2.41.5
@@ -49,7 +51,10 @@ typer==0.21.0
 typing-inspection==0.4.2
 typing_extensions==4.15.0
 tzlocal==5.3.1
+ua-parser==1.0.1
+ua-parser-builtins==202601
 urllib3==2.6.2
+user-agents==2.2.0
 uvicorn==0.38.0
 uvloop==0.22.1
 watchfiles==1.1.1

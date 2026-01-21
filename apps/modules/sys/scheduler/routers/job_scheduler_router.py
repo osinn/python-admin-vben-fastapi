@@ -4,6 +4,7 @@ from sqlalchemy import select, exists
 from apps.modules.sys.scheduler.crud.crud_job_scheduler import fetch_job_scheduler_list
 from apps.modules.sys.scheduler.models.job_scheduler import JobSchedulerModel
 from apps.modules.sys.scheduler.params.job_scheduler import JobSchedulerPageParam, JobSchedulerAddParam
+from core.framework.auth import PreAuthorize
 from core.framework.crud_async_session import AsyncGenericCRUD, crud_getter
 from core.framework.response import SuccessResponse, ErrorResponse
 from core.framework.scheduler_tools import job_scheduler
@@ -26,7 +27,8 @@ async def get_job_scheduler_all():
 
 @job_scheduler_router.post("/add_job_scheduler", summary="新增任务调度")
 async def add_job_scheduler(job_scheduler_add_param: JobSchedulerAddParam,
-                        crud_async_session: AsyncGenericCRUD = Depends(crud_getter(JobSchedulerModel))
+                        crud_async_session: AsyncGenericCRUD = Depends(crud_getter(JobSchedulerModel)),
+                        _ = Depends(PreAuthorize(permissions=["scheduler:job:add"]))
                         ):
     result = await crud_async_session.db.execute(select(exists().where(JobSchedulerModel.job_id == job_scheduler_add_param.job_id)))
     is_job_scheduler = result.scalar()
@@ -38,7 +40,8 @@ async def add_job_scheduler(job_scheduler_add_param: JobSchedulerAddParam,
 
 @job_scheduler_router.post("/edit_job_scheduler", summary="编辑任务调度")
 async def edit(job_scheduler_edit_param: JobSchedulerAddParam,
-                        crud_async_session: AsyncGenericCRUD = Depends(crud_getter(JobSchedulerModel))
+                        crud_async_session: AsyncGenericCRUD = Depends(crud_getter(JobSchedulerModel)),
+                        _ = Depends(PreAuthorize(permissions=["scheduler:job:edit"]))
                         ):
     db_obj = await crud_async_session.get(job_scheduler_edit_param.id)
     if not db_obj:
@@ -82,6 +85,7 @@ async def pause_job_scheduler(job_scheduler_id: int = Path(description="任务�
     db_obj = await crud_async_session.get(job_scheduler_id)
     if not db_obj:
         return ErrorResponse("任务调度不存在")
+    db_obj.job_status = 2
     job_scheduler.get_scheduler_service().pause_job(db_obj.job_id)
     return SuccessResponse("OK")
 
@@ -92,5 +96,6 @@ async def resume_job_scheduler(job_scheduler_id: int = Path(description="任务�
     db_obj = await crud_async_session.get(job_scheduler_id)
     if not db_obj:
         return ErrorResponse("任务调度不存在")
+    db_obj.job_status = 1
     job_scheduler.get_scheduler_service().resume_job(db_obj.job_id)
     return SuccessResponse("OK")
