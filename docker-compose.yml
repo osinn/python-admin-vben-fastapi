@@ -1,0 +1,50 @@
+version: "3"
+services:
+  api:
+    container_name: osinn-admin-vben-api
+    restart: always
+    ports:
+      - "9990:9990"
+    build:
+      context: ./
+      dockerfile: ./Dockerfile
+    environment:
+      TZ: "Asia/Shanghai"
+    networks:
+      - osinn-admin-vben-network
+    depends_on:
+      - mysql
+      - redis
+  redis:
+    container_name: osinn-admin-vben-redis
+    restart: always
+    image: redis:latest
+    ports:
+      - "6399:6379"
+    volumes:
+      - ./docker_env/redis/conf/redis.conf:/etc/redis/redis.conf
+    environment:
+      TZ: "Asia/Shanghai"
+    networks:
+      - osinn-admin-vben-network
+    command: redis-server /etc/redis/redis.conf
+
+  mysql:
+    container_name: osinn-admin-vben-mysql
+    restart: always
+    image: mysql:5.7.44
+    ports:
+      - "3366:3306"
+    volumes:
+      - ./docker_env/mysql/conf:/etc/mysql/conf.d
+      - ./docker_env/mysql/data:/var/lib/mysql
+      - ./docker_env/mysql/logs:/logs
+    environment:
+      TZ: "Asia/Shanghai"
+      MYSQL_ROOT_PASSWORD: "123456"
+      MYSQL_DATABASE: "root"
+    networks:
+      - osinn-admin-vben-network
+networks:
+  osinn-admin-vben-network:
+    driver: bridge

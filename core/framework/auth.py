@@ -277,6 +277,7 @@ class LoginAuth(AuthValidation):
                 SysUserSchema
             )
             if not user:
+                logger.error(f"用户[{login_request_param.account}]不存在")
                 raise BizException(
                     "账号或密码错误",
                     code=status.HTTP_401_UNAUTHORIZED
@@ -284,6 +285,7 @@ class LoginAuth(AuthValidation):
             private_key = await cache.get("rsa:private:" + login_request_param.ticket)
             password = decrypt_with_private_b64(login_request_param.password, private_key)
             if not self.verify_password(password, user.password):
+                logger.error(f"用户[{login_request_param.account}]密码错误")
                 raise BizException(
                     "账号或密码错误",
                     code=status.HTTP_401_UNAUTHORIZED

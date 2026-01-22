@@ -1,6 +1,7 @@
 import asyncio
 import os
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 import redis
 from fastapi import FastAPI
@@ -15,19 +16,76 @@ from core.framework.tools import import_modules_async
 from core.framework.scheduler_tools import job_scheduler, scheduler_manager
 from core.utils.ip_utils_ip2region import ip_location_service
 
+from dotenv import load_dotenv
+
+def load_environment():
+    """加载环境变量"""
+    # 从环境变量获取路径
+    env_file = os.getenv("ENV_FILE")
+    # 使用系统环境变量
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    if env_file and Path(f"{base_dir}/config/{env_file}").exists():
+        # 从指定路径加载
+        load_dotenv(dotenv_path=f"{base_dir}/config/{env_file}")
+        print(f"Loaded env from: {base_dir}/config/{env_file}")
+        logger.info(f"Loaded env from: {base_dir}/config/{env_file}")
+    else:
+        load_dotenv(dotenv_path=f"{base_dir}/config/.env")
+        environment = os.getenv("ENVIRONMENT", "dev")
+        load_dotenv(dotenv_path=f"{base_dir}/config/.env.{environment}")
+        print(f"Loaded env from: {base_dir}/config/.env.{environment}")
+        logger.info(f"Loaded env from: {base_dir}/config/.env.{environment}")
+
+# 加载环境变量
+load_environment()
+
+MYSQL_HOST = os.getenv("MYSQL_HOST", "127.0.0.1")
+MYSQL_PORT = os.getenv("MYSQL_PORT", "3306")
+MYSQL_USER = os.getenv("MYSQL_USER", "root")
+MYSQL_PASSWORD = os.getenv("MYSQL_PASSWORD", "123456")
+MYSQL_DB = os.getenv("MYSQL_DB", "osinn_vben")
+
+REDIS_HOST = os.getenv("REDIS_HOST", "127.0.0.1")
+REDIS_PORT = os.getenv("REDIS_PORT", "6379")
+REDIS_PASSWORD = os.getenv("REDIS_PASSWORD", None)
+
 """安全警告: 不要在生产中打开调试运行!"""
 
 DEBUG = os.getenv("DEBUG", "True").lower() == "true"
 
 logger.info(f"启动环境：{DEBUG}")
 
+# ----------------------------------------------
+
 """
-引入环境配置
+Mysql 数据库配置项
+连接引擎官方文档：https://www.osgeo.cn/sqlalchemy/core/engines.html
+数据库链接配置说明：mysql+asyncmy://数据库用户名:数据库密码@数据库地址:数据库端口/数据库名称
 """
-if DEBUG:
-    from config.dev import *
-else:
-    from config.prod import *
+# 数据库
+SQLALCHEMY_DATABASE_URL = f"mysql+asyncmy://{MYSQL_USER}:{MYSQL_PASSWORD}@{MYSQL_HOST}:{MYSQL_PORT}/{MYSQL_DB}"
+# 任务调度连接数据库地址
+APSCHEDULER_DATABASE_URL = f"mysql+pymysql://{MYSQL_USER}:{MYSQL_PASSWORD}@{MYSQL_HOST}:{MYSQL_PORT}/{MYSQL_DB}?charset=utf8"
+
+"""
+Redis 数据库配置
+"""
+REDIS_DB_ENABLE = True
+REDIS_DB_CONFIG = {
+    "host": REDIS_HOST,
+    "port": REDIS_PORT,
+    "password": REDIS_PASSWORD,
+    "decode_responses": True,
+    "db": 0
+}
+
+"""
+是否开启定时任务调度
+"""
+APSCHEDULER_ENABLE = True
+
+
+# ----------------------------------------------
 
 SECRET_KEY = "09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3e7"
 ALGORITHM = "HS256"

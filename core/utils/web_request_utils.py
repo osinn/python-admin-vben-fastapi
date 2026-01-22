@@ -9,7 +9,7 @@ class WebRequestUtils:
     def get_client_ip(request: Any) -> str:
         """
         获取客户端真实IP地址
-        :param request: 框架的请求对象（FastAPI/Flask/Django的request）
+        :param request: 框架的请求对象
         :return: 客户端IP字符串，获取失败返回空字符串
         """
         try:
@@ -20,7 +20,6 @@ class WebRequestUtils:
                 x_forwarded_for = request.headers.get("X-Forwarded-For", "")
                 x_real_ip = request.headers.get("X-Real-IP", "")
             elif hasattr(request, 'META'):
-                # Django
                 x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR", "")
                 x_real_ip = request.META.get("HTTP_X_REAL_IP", "")
             else:
@@ -39,15 +38,12 @@ class WebRequestUtils:
                 if ip and ip != "unknown":
                     return ip
 
-            # 2. 获取原生客户端IP（适配不同框架）
+            # 2. 获取原生客户端IP
             if hasattr(request, 'client') and request.client:
-                # FastAPI
                 ip = request.client.host
             elif hasattr(request, 'remote_addr'):
-                # Flask
                 ip = request.remote_addr
             elif hasattr(request, 'META'):
-                # Django
                 ip = request.META.get("REMOTE_ADDR", "")
             else:
                 ip = ""
@@ -67,15 +63,15 @@ class WebRequestUtils:
     def get_browser_info(request: Any) -> Dict[str, Optional[str]]:
         """
         获取客户端浏览器信息
-        :param request: 框架的请求对象（FastAPI/Flask/Django的request）
+        :param request: 框架的请求对象
         :return: 包含浏览器名称、版本、系统等信息的字典
         """
         try:
             # 1. 获取User-Agent字符串
             if hasattr(request, 'headers'):
-                user_agent_str = request.headers.get("User-Agent", "")  # FastAPI/Flask
+                user_agent_str = request.headers.get("User-Agent", "")
             elif hasattr(request, 'META'):
-                user_agent_str = request.META.get("HTTP_USER_AGENT", "")  # Django
+                user_agent_str = request.META.get("HTTP_USER_AGENT", "")
             else:
                 user_agent_str = ""
 
@@ -124,34 +120,3 @@ class WebRequestUtils:
             "client_ip": WebRequestUtils.get_client_ip(request),
             "browser_info": WebRequestUtils.get_browser_info(request)
         }
-#
-#     @staticmethod
-#     def get_ip_address_attr(ip: str) -> Optional[str]:
-#         """
-#         获取IP归属地
-#         :param ip: IP地址
-#         :return: 返回IP归属地
-#         """
-#         try:
-#             db_path = "../../lib/ip2region_v4.xdb"
-#             version = util.IPv4
-#             searcher = xdb.new_with_file_only(version, db_path)
-#         except Exception as e:
-#             logger.error(f"ip库加载失败: {str(e)}")
-#             return None
-#         try:
-#             region = searcher.search(ip)
-#             if "内网IP" in region:
-#                 _, _, ip_address_attr, _ = region.split('|')
-#                 return ip_address_attr
-#             else:
-#                 return region
-#         except Exception as e:
-#             logger.error(f"ip地址归属地搜索异常: {str(e)}")
-#         finally:
-#             searcher.close()
-#
-#
-# if __name__ == "__main__":
-#     WebRequestUtils.get_ip_address_attr("127.0.0.1")
-#     # WebRequestUtils.get_ip_address_attr("223.198.165.152")
