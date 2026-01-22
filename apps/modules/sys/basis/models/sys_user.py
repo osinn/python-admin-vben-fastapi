@@ -22,7 +22,7 @@ class SysUserModel(BaseEntity):
     birthday: Mapped[datetime] = mapped_column(DateTime, comment="生日")
     sex: Mapped[int] = mapped_column(Integer, comment="性别 1-男；2-女；3未知")
     dept_id: Mapped[int] = mapped_column(BIGINT, comment="部门ID")
-    lock_account: Mapped[int] = mapped_column(Integer, nullable=False, default=False, comment="锁定标记 1正常；2锁定")
+    lock_account: Mapped[int] = mapped_column(Integer, nullable=False, default=1, comment="锁定标记 1正常；2锁定")
     sort: Mapped[int] = mapped_column(Integer, nullable=False, comment="排序", default=0)
     remarks: Mapped[str] = mapped_column(String(512), comment="备注")
     status: Mapped[int] = mapped_column(Integer, comment="状态 1正常；2停用", default=1)

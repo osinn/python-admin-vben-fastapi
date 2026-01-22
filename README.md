@@ -1,13 +1,11 @@
 # python-admin-vben
-python-admin-vben 后台管理系统，使用Python FastAPI 基于 vben5.0 版本，vue3 vite6 ant-design-vue typescript 语法开发高性能后台管理系统
+python-admin-vben 后台管理系统，使用Python v3.13、FastAPI v0.124.2 基于 vben5.0 版本，vue3 vite6 ant-design-vue typescript 语法开发高性能后台管理系统
 
 - [前端项目](https://github.com/osinn/python-vue-vben-admin) - vue-vben-admin
 
-> Python使用FastAPI框架示例，python 版本 >=3.13
-
 # 安装依赖
-- 执行`pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple`
-- 执行`pip freeze > requirements.txt`命令将项目依赖添加到`requirements.txt`中
+- 执行`pip3 install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple`
+- 执行`pip3 freeze > requirements.txt`命令将项目依赖添加到`requirements.txt`中
 
 # 接口文档
 - http://127.0.0.1:8000/docs 或 http://127.0.0.1:8000/redoc
@@ -28,10 +26,46 @@ python-admin-vben 后台管理系统，使用Python FastAPI 基于 vben5.0 版�
 | `key` | str | Python属性名 | `key='user_name'` |
 | `system` | bool | 是否为系统列 | `system=False` |
 
-### 数据更新
+# Linux 部署项目
 ```
-result = await crud_async_session.get(sys_config_id)
-result.is_deleted = True
-result.status = True
-查询出数据，修改属性值，函数执行完后会刷新到数据库中
+- 进入项目根目录
+- 创建虚拟环境 python3 -m venv .venv
+- 激活虚拟环境 source .venv/bin/activate
+- 安装依赖 pip3 install -r requirements.txt
+
+- 如果安装依赖提示 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning
+- 可以使用虚拟环境下的pip进行安装 ./.venv/bin/pip install -r requirements.txt，或者不使用root用户改用普通用户进行安装
+```
+### 创建 Systemd 服务文件
+- fastapi.service
+
+```
+[Unit]
+Description=fastapi service
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/python/python-admin-vben
+Environment="TZ=Asia/Shanghai"
+# 生产环境关键配置
+Environment="DEBUG=False"
+
+ExecStart=/home/python/python-admin-vben/.venv/bin/python main.py
+
+Restart=always
+
+RestartSec=5
+KillSignal=SIGINT
+SyslogIdentifier=fastapi-identifier
+User=root
+
+[Install]
+WantedBy=multi-user.target
+```
+### 启动服务
+```
+systemctl daemon-reload
+systemctl start fastapi
+systemctl status fastapi
 ```
