@@ -19,7 +19,7 @@ from core.utils.ip_utils_ip2region import ip_location_service
 
 DEBUG = os.getenv("DEBUG", "True").lower() == "true"
 
-logger.info("启动环境", DEBUG)
+logger.info(f"启动环境：{DEBUG}")
 
 """
 引入环境配置

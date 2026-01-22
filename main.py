@@ -50,7 +50,7 @@ if settings.CORS_ORIGIN_ENABLE:
     )
 
 if __name__ == '__main__':
-    uvicorn.run("main:app", host="127.0.0.1", port=5320, reload=settings.DEBUG)
+    uvicorn.run("main:app", host="127.0.0.1", port=9990, reload=settings.DEBUG)
     """
     启动项目
 
