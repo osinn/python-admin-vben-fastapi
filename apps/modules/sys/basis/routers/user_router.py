@@ -22,8 +22,8 @@ async def get_user_list(sys_user_page_param: SysUserPageParam,
                         crud_async_session: AsyncGenericCRUD = Depends(crud_getter(SysUserModel))
                         ):
     page_vo = await CrudSysUser.page_query_user_list(sys_user_page_param, crud_async_session)
-    await CrudSysUser.fill_base_user_info(page_vo.items, crud_async_session)
-    await CrudSysUser.fill_user_data(page_vo.items,crud_async_session)
+    await crud_async_session.fill_base_user_info(page_vo.items)
+    await crud_async_session.fill_user_data(page_vo.items)
     return SuccessResponse(page_vo)
 
 @user_router.get("/{user_id}/get_user_by_id", summary="获取用户详情")

@@ -147,7 +147,7 @@ class CrudSysMenu:
                 """
             ]
             rows = await crud_async_session.list_model(" ".join(sql),
-                                                       {"user_id": user_id, "status": False, "type": tuple(menu_types)})
+                                                       {"user_id": user_id, "status": 1, "type": tuple(menu_types)})
             data_list = []
             for item in rows:
                 sys_menu_model = SysMenuModel()
@@ -185,5 +185,5 @@ class CrudSysMenu:
                 """
             ]
             rows = await crud_async_session.list_model(" ".join(sql),
-                                                       {"user_id": user_id, "status": False})
+                                                       {"user_id": user_id, "status": 1})
             return [row["auth_code"] for row in rows]

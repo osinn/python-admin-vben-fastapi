@@ -21,6 +21,7 @@ role_router = APIRouter(prefix="/role")
 @role_router.post("/get_role_list", summary="获取角色列表")
 async def get_role_list(sys_role_page_param: SysRolePageParam, crud_async_session: AsyncGenericCRUD = Depends(crud_getter(SysRoleModel))):
     page_vo = await CrudSysRole.page_query_role_list(sys_role_page_param, crud_async_session)
+    await crud_async_session.fill_base_user_info(page_vo.items)
     return SuccessResponse(page_vo)
 
 @role_router.get("/get_role_list_all", summary="查询全部角色")

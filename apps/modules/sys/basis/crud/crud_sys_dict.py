@@ -6,7 +6,7 @@ async def get_page_dict_list(sys_dict_page_param: SysDictPageParam,
                     crud_async_session: AsyncGenericCRUD):
     sql = [
         """
-        select * from tbl_sys_dict where is_deleted = false
+        select * from tbl_sys_dict where is_deleted = 0
         """
     ]
     # 搜索关键字：字典编码/字典名称

@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, Path, Request
 from sqlalchemy import delete
 
 from apps.modules.sys.basis.crud.crud_sys_post import CrudSysPost
+from apps.modules.sys.basis.crud.crud_sys_user import CrudSysUser
 from apps.modules.sys.basis.models.sys_dept_post import SysDeptPostModel
 from apps.modules.sys.basis.models.sys_post import SysPostModel
 from apps.modules.sys.basis.params.sys_post import SysPostQueryParam, SysPostAddParam, SysPostEditParam, \
@@ -20,6 +21,7 @@ post_router = APIRouter(prefix="/post")
 async def get_post_list(sys_post_query_param: SysPostQueryParam,
                         crud_async_session: AsyncGenericCRUD = Depends(crud_getter(SysPostModel))):
     page_vo = await CrudSysPost.page_query_post_list(sys_post_query_param, crud_async_session)
+    await crud_async_session.fill_base_user_info(page_vo.items)
     return SuccessResponse(page_vo)
 
 

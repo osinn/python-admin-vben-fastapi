@@ -63,7 +63,8 @@ async def edit(job_scheduler_edit_param: JobSchedulerAddParam,
 
 @job_scheduler_router.delete("/{job_scheduler_id}/delete_job_scheduler", summary="删除任务调度")
 async def delete_job_scheduler(job_scheduler_id: int = Path(description="任务调度唯一ID"),
-                        crud_async_session: AsyncGenericCRUD = Depends(crud_getter(JobSchedulerModel))
+                        crud_async_session: AsyncGenericCRUD = Depends(crud_getter(JobSchedulerModel)),
+                        _ = Depends(PreAuthorize(permissions=["scheduler:job:delete"]))
                         ):
     db_obj = await crud_async_session.get(job_scheduler_id)
     if not db_obj:
@@ -80,7 +81,8 @@ async def delete_job_scheduler(job_scheduler_id: int = Path(description="任务�
 
 @job_scheduler_router.put("/{job_scheduler_id}/pause_job_scheduler", summary="暂停任务调度")
 async def pause_job_scheduler(job_scheduler_id: int = Path(description="任务调度唯一ID"),
-                               crud_async_session: AsyncGenericCRUD = Depends(crud_getter(JobSchedulerModel))
+                               crud_async_session: AsyncGenericCRUD = Depends(crud_getter(JobSchedulerModel)),
+                               _ = Depends(PreAuthorize(permissions=["scheduler:job:pause"]))
                                ):
     db_obj = await crud_async_session.get(job_scheduler_id)
     if not db_obj:
@@ -91,7 +93,8 @@ async def pause_job_scheduler(job_scheduler_id: int = Path(description="任务�
 
 @job_scheduler_router.put("/{job_scheduler_id}/resume_job_scheduler", summary="继续任务调度")
 async def resume_job_scheduler(job_scheduler_id: int = Path(description="任务调度唯一ID"),
-                               crud_async_session: AsyncGenericCRUD = Depends(crud_getter(JobSchedulerModel))
+                               crud_async_session: AsyncGenericCRUD = Depends(crud_getter(JobSchedulerModel)),
+                                _ = Depends(PreAuthorize(permissions=["scheduler:job:resume"]))
                                ):
     db_obj = await crud_async_session.get(job_scheduler_id)
     if not db_obj:

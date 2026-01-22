@@ -1,4 +1,5 @@
 import asyncio
+import os
 from contextlib import asynccontextmanager
 
 import redis
@@ -16,7 +17,9 @@ from core.utils.ip_utils_ip2region import ip_location_service
 
 """安全警告: 不要在生产中打开调试运行!"""
 
-DEBUG = True
+DEBUG = os.getenv("DEBUG", "True").lower() == "true"
+
+logger.info("启动环境", DEBUG)
 
 """
 引入环境配置

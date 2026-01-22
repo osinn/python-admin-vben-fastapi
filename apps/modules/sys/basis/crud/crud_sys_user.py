@@ -1,14 +1,12 @@
-from collections import defaultdict
-from typing import Optional, List
+from typing import Optional
 
 from sqlalchemy import exists, select
 
 from apps.modules.sys.basis.models.sys_user import SysUserModel
 from apps.modules.sys.basis.params.sys_user import SysUserPageParam
 
-from apps.modules.sys.basis.schemas.sys_user import SysUserSchema, UserRolePermissionSchema, AuthPermissionSchema
+from apps.modules.sys.basis.schemas.sys_user import SysUserSchema, UserRolePermissionSchema
 from core.constants import auth_constant
-from core.framework.common_schemas import BaseSchema
 from core.framework.crud_async_session import AsyncGenericCRUD
 
 class CrudSysUser:
@@ -132,104 +130,3 @@ class CrudSysUser:
         await crud_async_session.execute_sql(sql, {"user_id": user_id})
         sql = "DELETE FROM tbl_sys_user_role WHERE user_id = :user_id"
         await crud_async_session.execute_sql(sql, {"user_id": user_id})
-
-    @staticmethod
-    async def fill_base_user_info(base_user_list: List[BaseSchema], crud_async_session: AsyncGenericCRUD) -> None:
-        if len(base_user_list) == 0:
-            return
-        user_ids = set()
-        for user in base_user_list:
-            if user.created_by:
-                user_ids.add(user.created_by)
-            if user.updated_by:
-                user_ids.add(user.updated_by)
-
-        if len(user_ids) != 0:
-            # in 查询集合转元数组
-            user_data = await crud_async_session.execute_sql("select id, nickname from tbl_sys_user where is_deleted = 0 and id in :user_ids", {"user_ids": tuple(user_ids)},fetch_data=True)
-            user_name_map = {item['id']: item['nickname'] for item in user_data}
-            for user in base_user_list:
-
-                if user.created_by:
-                    user_name = user_name_map.get(user.created_by, None)
-                    user.created_by_name = user_name
-                if user.updated_by:
-                    user_name = user_name_map.get(user.updated_by, None)
-                    user.created_by_name = user_name
-    @staticmethod
-    async def fill_user_data(user_data: List[SysUserSchema], crud_async_session: AsyncGenericCRUD) -> None:
-        if len(user_data) == 0:
-            return None
-        dept_ids = set()
-        user_ids = set()
-        for user in user_data:
-            user_ids.add(user.id)
-            if user.dept_id:
-                dept_ids.add(user.dept_id)
-
-        dept_name_map = {}
-
-        if len(dept_ids) != 0:
-            # in 查询集合转元数组
-            dept_data = await crud_async_session.execute_sql("select id, name from tbl_sys_dept where is_deleted = 0 and id in :dept_ids", {"dept_ids": tuple(dept_ids)},fetch_data=True)
-            dept_name_map = {item['id']: item['name'] for item in dept_data}
-
-        role_sql = """
-            SELECT
-              r.id,
-              r.name,
-              ur.user_id
-            FROM
-              tbl_sys_role r
-                JOIN tbl_sys_user_role ur ON ur.role_id = r.id
-                AND ur.user_id IN :user_ids
-            where r.is_deleted = 0
-        """
-
-        post_sql = """
-          SELECT
-            p.id,
-            p.name, 
-           up.user_id
-          FROM
-            tbl_sys_post p
-              JOIN tbl_sys_user_post up ON up.post_id = p.id
-              AND up.user_id IN :user_ids
-          where p.is_deleted = 0
-        """
-
-        role_data = await crud_async_session.execute_sql(role_sql,{"user_ids": tuple(user_ids)}, fetch_data=True)
-        post_data = await crud_async_session.execute_sql(post_sql,{"user_ids": tuple(user_ids)}, fetch_data=True)
-
-        role_map = defaultdict(list)
-        for entity in role_data:
-            user_id = entity["user_id"]
-            role_map[user_id].append(entity)
-
-        post_map = defaultdict(list)
-        for entity in post_data:
-            user_id = entity["user_id"]
-            post_map[user_id].append(entity)
-
-        for user in user_data:
-            roles = role_map.get(user.id, [])
-            posts = post_map.get(user.id, [])
-            if user.dept_id:
-                dept_name = dept_name_map.get(user.dept_id, None)
-                user.dept_name = dept_name
-            role_ids = []
-            role_names = []
-            for role in roles:
-                role_ids.append(role["id"])
-                role_names.append(role["name"])
-
-            post_ids = []
-            post_names = []
-            for post in posts:
-                post_ids.append(post["id"])
-                post_names.append(post["name"])
-
-            user.role_ids = role_ids
-            user.role_names = ",".join(role_names)
-            user.post_ids = post_ids
-            user.post_names = ",".join(post_names)
