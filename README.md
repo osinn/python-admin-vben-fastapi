@@ -39,6 +39,10 @@ python-admin-vben/
 │   ├── framework/                      # 框架扩展（中间件、认证等）
 │   ├── utils/                          # 工具函数库
 ├── lib/                                # 第三方依赖库
+├── docker/                             # docker部署
+│   ├── Dockerfile                      # 项目服务构建
+│   ├── docker-compose.yml              # docker-compose 部署编排
+│   ├── script.sh                       # 部署以及操作命令脚本
 ├── main.py                             # 项目启动入口
 └── requirements.txt                    # Python 依赖声明
 ```
@@ -60,6 +64,13 @@ python-admin-vben/
 | `system` | bool | 是否为系统列 | `system=False` |
 
 # Linux 部署项目
+### Docker 部署方式
+- 确保`Docker`以及`docker-compose`已经安装
+- 进入项目`python-admin-vben/docker`执行以下命令
+- 依次执行`chmod +x script.sh`、`./script.sh`命令，然后根据提示 输入 1，即可安装部署服务
+- 如果想用自己安装的`mysql`以及`redis`,在`docker-compose.yml`中注释掉`redis`、`mysql`部分内容，然后在`config`目录下修改`.env.docker`文件中对应的地址、端口号、密码即可
+
+### Systemd 服务文件部署方式
 ```
 - 进入项目根目录
 - 创建虚拟环境 python3 -m venv .venv
@@ -69,8 +80,7 @@ python-admin-vben/
 - 如果安装依赖提示 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning
 - 可以使用虚拟环境下的pip进行安装 ./.venv/bin/pip install -r requirements.txt，或者不使用root用户改用普通用户进行安装
 ```
-### 创建 Systemd 服务文件
-- fastapi.service
+- 进入`/etc/systemd/system`目录创建 Systemd 服务文件 `fastapi.service`
 
 ```
 [Unit]
@@ -95,6 +105,7 @@ User=root
 [Install]
 WantedBy=multi-user.target
 ```
+- `/home/project`改为实际部署目录
 ### 启动服务
 ```
 systemctl daemon-reload

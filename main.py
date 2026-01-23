@@ -13,7 +13,7 @@ from core.framework.auth import AuthAuthorize
 from core.framework.exception import register_exception
 
 
-# 2. 定义统一的错误响应模型（可选，用于规范格式）
+# 2. 定义统一的错误响应模型
 class ErrorResponse(BaseModel):
     code: int = Field(description="错误码")
     msg: str = Field(description="错误信息")
@@ -50,7 +50,7 @@ if settings.CORS_ORIGIN_ENABLE:
     )
 
 if __name__ == '__main__':
-    uvicorn.run("main:app", host="127.0.0.1", port=5320, reload=settings.DEBUG)
+    uvicorn.run("main:app", host="0.0.0.0", port=9990, reload=settings.DEBUG)
     """
     启动项目
 
