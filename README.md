@@ -92,7 +92,7 @@ After=network.target
 Type=simple
 WorkingDirectory=/home/project/python-admin-vben
 # 生产环境关键配置
-Environment="DEBUG=False"
+Environment="ENV_FILE=prod"
 
 ExecStart=/home/project/python-admin-vben/.venv/bin/python main.py
 
