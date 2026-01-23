@@ -26,6 +26,7 @@ python-admin-vben/
 │   │   │   │   ├── schemas/            # 数据传输模型
 │   │   │   ├── monitor/                # 系统监控模块
 │   │   │   ├── scheduler/              # 定时任务模块
+│   │   └── [其他业务模块]/               # 自定义业务模块（如订单/商品等）
 │   └── app_router.py                   # 应用模块路由总入口
 ├── config/                             # 配置中心
 │   ├── .env                            # 环境变量配置
