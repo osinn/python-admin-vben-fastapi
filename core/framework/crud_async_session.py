@@ -168,8 +168,14 @@ class AsyncGenericCRUD:
     async def execute_sql(self, sql: str, params: dict = None, fetch_data: bool = False):
         if fetch_data:
             result = await self.db.execute(text(sql), params or {})
-            result_data = result.mappings().all()
-            return [dict(row) for row in result_data]
+            sql_lower = sql.strip().lower()
+            is_exists_query = sql_lower.startswith("select exists")
+            if is_exists_query:
+                exists_value = result.scalar()
+                return bool(exists_value)
+            else:
+                result_data = result.mappings().all()
+                return [dict(row) for row in result_data]
         else:
             await self.db.execute(text(sql), params or {})
             return None
