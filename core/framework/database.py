@@ -4,8 +4,8 @@
 官方文档：https://docs.sqlalchemy.org/en/20/intro.html#installation
 """
 from typing import AsyncGenerator
-
-from sqlalchemy.ext.asyncio import  AsyncSession, AsyncAttrs
+from contextlib import asynccontextmanager
+from sqlalchemy.ext.asyncio import AsyncSession, AsyncAttrs
 from sqlalchemy.orm import DeclarativeBase, declared_attr, Mapped, mapped_column
 from sqlalchemy import DateTime, BIGINT, func, Boolean, inspect
 from datetime import datetime
@@ -99,6 +99,14 @@ async def db_getter() -> AsyncGenerator[AsyncSession, None]:
 
     函数的返回类型被注解为 AsyncGenerator[int, None]，其中 AsyncSession 是生成的值的类型，而 None 表示异步生成器没有终止条件。
     """
+    async with session_factory() as session:
+        # 创建一个新的事务，半自动 commit
+        async with session.begin():
+            yield session
+
+@asynccontextmanager
+async def get_async_db():
+    from core.framework.database_config import session_factory
     async with session_factory() as session:
         # 创建一个新的事务，半自动 commit
         async with session.begin():

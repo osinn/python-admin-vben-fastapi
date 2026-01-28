@@ -27,8 +27,8 @@ async def sync_job(**kwargs):
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     print(f"[cron_job] 执行时间: {now} ====>", kwargs)
 
- # 在任务内部创建数据库会话
- #    with session_factory() as db:
+ # 在任务内部操作数据库
+ #   async with get_async_db() as db:
  #        # 执行数据库操作
  #        users = db.query(User).filter(User.is_deleted == True).all()
  #        print(f"清理 {len(users)} 个已删除用户")
