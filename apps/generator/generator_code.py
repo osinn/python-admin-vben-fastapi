@@ -10,9 +10,10 @@ from jinja2 import Template
 
 # ==================== 配置区 ====================
 DATABASE_URL = "mysql+pymysql://root:osinn123321@192.168.1.50:3306/osinn_vben?charset=utf8"
-DEFAULT_TABLE_NAME = "tbl_sys_http_log"
+DEFAULT_TABLE_NAME = "tbl_sys_notice"
 OUTPUT_PREFIX_REMOVE = "tbl_"
 USE_MYSQL_BIGINT = True  # 设为 True 则 BIGINT 用 mysql.BIGINT
+folders = ['crud', 'models', 'params', 'routers', 'schemas']
 # =================================================
 
 MODEL_TEMPLATE = '''from typing import Optional
@@ -142,7 +143,98 @@ def map_to_python_type(col_type_obj):
 def generate_schema_code():
     print('')
 
+def create_project_structure(table_name, name, class_name):
+    """
+    创建项目文件夹结构
+    router_names: 要创建的router文件名列表，不包含_router.py后缀
+    """
+    # 定义要创建的文件夹列表
+
+    for folder in folders:
+        os.makedirs(folder, exist_ok=True)
+        # from .sys_notice_router import sys_notice_router
+        if folder == 'params':
+            with open(os.path.join(folder,  f"{name}.py"), 'w', encoding='utf-8') as f:
+                f.write('from pydantic import Field\n')
+                f.write('from core.framework.common_schemas import BaseModelSchema\n\n')
+                f.write(f'class {class_name}PageParam(BaseModelSchema):\n'
+                        '    page_num: int = Field(default=1, description="当前页，默认1（从1开始）")\n'
+                        '    page_size: int = Field(default=10, description="每页行数，默认10")\n'
+                        '    search_key: Optional[str] = Field(default=None, description="搜索关键字：")\n')
+                f.write(f'\nclass {class_name}AddParam(BaseModelSchema):\n')
+                f.write('    pass\n')
+                f.write(f'\nclass {class_name}EditParam({class_name}AddParam):\n')
+                f.write('    id: int = Field(description="唯一ID")\n')
+
+        if folder == 'crud':
+            with open(os.path.join(folder,  f"crud_{name}.py"), 'w', encoding='utf-8') as f:
+                f.write(f'from core.framework.crud_async_session import AsyncGenericCRUD\n')
+                f.write(f'\nasync def page_query_{name}_list(param: {class_name}PageParam, crud_async_session: AsyncGenericCRUD):\n')
+                f.write(f'    sql = ["select * from {table_name} where is_deleted = 0"]\n')
+                f.write(f'    sql.append(" order by created_time desc")\n')
+                f.write(f'    page_vo = await crud_async_session.page_select_model(" ".join(sql), param.__dict__, v_schema={class_name}Schema)\n')
+                f.write(f'    return page_vo\n')
+
+        init_file = os.path.join(folder, '__init__.py')
+        with open(init_file, 'w', encoding='utf-8') as f:
+            f.write(f'# {folder.capitalize()} module\n')
+            f.write('# Auto-generated __init__.py\n')
+            if folder == 'routers':
+                f.write(f'from .{name}_router import {name}_router\n')
+
+
+        print(f"✓ {folder}/")
+
+    filename = f"{name}_router.py"
+    filepath = os.path.join('routers', filename)
+    class_name_model = class_name + 'Model'
+    # 写入路由文件内容
+    with open(filepath, 'w', encoding='utf-8') as f:
+        f.write('from fastapi import APIRouter, Depends, Path\n')
+        f.write('from core.framework.crud_async_session import crud_getter, AsyncGenericCRUD\n')
+        f.write('from core.framework.response import SuccessResponse, ErrorResponse\n')
+        f.write('\n')
+        f.write(f'{name}_router = APIRouter()\n')
+        f.write('\n')
+        f.write(f'@{name}_router.post("/get_{name}_list", summary="列表查询")\n')
+        f.write(f'async def get_{name}s(param: {class_name}PageParam, crud_async_session: AsyncGenericCRUD = Depends(crud_getter({class_name_model}))):\n')
+        f.write(f'    """获取所有{name}"""\n')
+        f.write(f'    page_vo = await page_query_{name}_list(param, crud_async_session)\n')
+        f.write(f'    await crud_async_session.fill_base_user_info(page_vo.items)\n')
+        f.write(f'    return SuccessResponse(page_vo)\n')
+        f.write('\n')
+        f.write(f'@{name}_router.post("/add_{name}", summary="新增数据")\n')
+        f.write(f'async def add_{name}(param: {class_name}AddParam, crud_async_session: AsyncGenericCRUD = Depends(crud_getter({class_name_model}))):\n')
+        f.write(f'    """创建新的{name}"""\n')
+        f.write(f'    await crud_async_session.create(param)\n')
+        f.write(f'    return SuccessResponse("OK")\n')
+        f.write('\n')
+        f.write(f'@{name}_router.get("/{{{name}_id}}/get_{name}_info", summary="获取详情")\n')
+        f.write(f'async def get_{name}({name}_id: int = Path(description="唯一ID"), crud_async_session: AsyncGenericCRUD = Depends(crud_getter({class_name_model}))):\n')
+        f.write(f'    """根据ID获取{name}"""\n')
+        f.write(f'    return SuccessResponse(await crud_async_session.get(sys_notice_id, v_schema={class_name}Schema))\n')
+        f.write('\n')
+        f.write(f'@{name}_router.put("/edit_{name}", summary="编辑数据")\n')
+        f.write(f'async def edit_{name}(param: {class_name}EditParam, crud_async_session: AsyncGenericCRUD = Depends(crud_getter({class_name_model}))):\n')
+        f.write(f'    """更新{name}"""\n')
+        f.write(f'    db_obj = await crud_async_session.get(param.id)\n')
+        f.write(f'    if not db_obj:\n')
+        f.write(f'        return ErrorResponse("数据不存在")\n')
+        f.write(f'    await crud_async_session.update(param, db_obj)\n')
+        f.write(f'    return SuccessResponse("OK")\n')
+        f.write('\n')
+        f.write(f'@{name}_router.delete("/{{{name}_id}}/delete_{name}", summary="删除数据")\n')
+        f.write(f'async def delete_{name}({name}_id: int = Path(description="唯一ID"), crud_async_session: AsyncGenericCRUD = Depends(crud_getter({class_name_model}))):\n')
+        f.write(f'    """删除{name}"""\n')
+        f.write(f'    result: bool = await crud_async_session.delete(sys_notice_id)\n')
+        f.write(f'    if not result:\n')
+        f.write(f'        return ErrorResponse("删除失败")\n')
+        f.write(f'    return SuccessResponse("OK")\n')
+
+    print(f"\n项目结构创建完成！")
+
 def generate_model_code(table_name: str, engine):
+
     inspector = Inspector.from_engine(engine)
     columns_info = inspector.get_columns(table_name)
 
@@ -224,7 +316,10 @@ def generate_model_code(table_name: str, engine):
     )
 
     output_base = table_name[len(OUTPUT_PREFIX_REMOVE):] if table_name.startswith(OUTPUT_PREFIX_REMOVE) else table_name
-    output_file = os.path.join(os.getcwd(), f"{output_base}.py")  # f"./{output_base}.py"
+
+    create_project_structure(table_name, output_base, class_name)
+
+    output_file = os.path.join(os.getcwd(), f"{folders[1]}/{output_base}.py")
 
     with open(output_file, "w", encoding="utf-8") as f:
         f.write(code)
@@ -239,7 +334,8 @@ def generate_model_code(table_name: str, engine):
         need_time=need_time
     )
     output_base = table_name[len(OUTPUT_PREFIX_REMOVE):] if table_name.startswith(OUTPUT_PREFIX_REMOVE) else table_name
-    output_file = os.path.join(os.getcwd(), f"{output_base}_schema.py")  # f"./{output_base}.py"
+
+    output_file = os.path.join(os.getcwd(), f"{folders[4]}/{output_base}.py")
 
     with open(output_file, "w", encoding="utf-8") as f:
         f.write(schema_code)

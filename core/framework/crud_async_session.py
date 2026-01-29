@@ -180,11 +180,15 @@ class AsyncGenericCRUD:
             await self.db.execute(text(sql), params or {})
             return None
 
-    async def get(self, id: int):
+    async def get(self, id: int, v_schema = None):
         result = await self.db.execute(
             select(self.model_class).where(self.model_class.id == id)
         )
-        return result.scalar_one_or_none()
+        if v_schema:
+            rows = result.scalars().all()
+            return [v_schema(**v_schema.model_validate(obj).model_dump()) for obj in rows]
+        else:
+            return result.scalar_one_or_none()
 
 
     async def get_model_info_all(self, v_schema = None) -> Optional[Any]:
