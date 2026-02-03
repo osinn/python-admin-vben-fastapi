@@ -51,6 +51,7 @@ def register_exception(app: FastAPI):
         """
         自定义异常
         """
+        logger.error("请求地址", request.url.__str__())
         if DEBUG:
             print("请求地址", request.url.__str__())
             print("捕捉到重写BizException异常异常：biz_exception_handler")
@@ -68,6 +69,7 @@ def register_exception(app: FastAPI):
         """
         重写HTTPException异常处理器
         """
+        logger.error("请求地址", request.url.__str__())
         if DEBUG:
             print("请求地址", request.url.__str__())
             print("捕捉到重写HTTPException异常异常：unicorn_exception_handler")
@@ -106,6 +108,7 @@ def register_exception(app: FastAPI):
         """
         重写请求验证异常处理器
         """
+        logger.error("请求地址", request.url.__str__())
         if DEBUG:
             print("请求地址", request.url.__str__())
             print("捕捉到重写请求验证异常异常：validation_exception_handler")
@@ -145,6 +148,7 @@ def register_exception(app: FastAPI):
         """
         捕获值异常
         """
+        logger.error("请求地址", request.url.__str__())
         if DEBUG:
             print("请求地址", request.url.__str__())
             print("捕捉到值异常：value_exception_handler")
@@ -166,6 +170,7 @@ def register_exception(app: FastAPI):
         """
         捕获全部异常
         """
+        logger.error("请求地址", request.url.__str__())
         if DEBUG:
             print("请求地址", request.url.__str__())
             print("捕捉到全局异常：all_exception_handler")
