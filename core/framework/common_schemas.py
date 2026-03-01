@@ -49,8 +49,8 @@ class BaseModelSchema(BaseModel):
 class BaseSchema(BaseModelSchema):
 
     id: int = Field(default=0, description="唯一ID")
-    created_time: datetime = Field(default=None,description='创建时间 yyyy-MM-dd HH:mm:ss')
-    created_by: int = Field(default=None,description='创建人ID')
+    created_time: Optional[datetime] = Field(default=None,description='创建时间 yyyy-MM-dd HH:mm:ss')
+    created_by: Optional[int] = Field(default=None,description='创建人ID')
     created_by_name: Optional[str] = Field(default=None,description='创建人名称')
     # 允许为空
     updated_time: Optional[datetime] = Field(default=None,description='更新时间 yyyy-MM-dd HH:mm:ss')
