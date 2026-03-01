@@ -101,9 +101,17 @@ class AsyncGenericCRUD:
 
         count_sql = re.split(r'\s+(LIMIT|OFFSET)\s', count_sql, flags=re.IGNORECASE)[0].strip()
 
+
+        if params['page_num'] < 1:
+            params['page_num'] = 1
+        if params['page_num'] < 1:
+            params['page_size'] = 10
+
+        params['page_num'] = (params['page_num'] - 1) * params['page_size']
+
         count_result = await self.db.execute(text(count_sql), params or {})
         total = count_result.scalar_one()
-        result = await self.db.execute(text(sql), params or {})
+        result = await self.db.execute(text(sql + " LIMIT :page_num , :page_size"), params or {})
         rows = result.fetchall()
 
         if rows and v_schema:
