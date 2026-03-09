@@ -90,17 +90,29 @@ class AsyncGenericCRUD:
         :param kwargs: 关键词参数
         :param v_schema: 序列化对象
         """
-        count_sql = re.sub(
-            r'^\s*SELECT\s+.*?\s+FROM\s',
-            'SELECT COUNT(1) FROM ',
-            sql,
-            flags=re.IGNORECASE | re.DOTALL
-        )
 
-        count_sql = re.split(r'\s+ORDER\s+BY\s', count_sql, flags=re.IGNORECASE)[0]
+
+        count_sql = re.split(r'\s+ORDER\s+BY\s', sql, flags=re.IGNORECASE)[0]
 
         count_sql = re.split(r'\s+(LIMIT|OFFSET)\s', count_sql, flags=re.IGNORECASE)[0].strip()
 
+        has_group = has_group_by(sql)
+
+        if has_group:
+            count_sql = re.sub(
+                r'^\s*SELECT\s+.*?\s+FROM\s',
+                'SELECT 1 FROM ',
+                count_sql,
+                flags=re.IGNORECASE | re.DOTALL
+            )
+            count_sql = f"SELECT COUNT(1) FROM ({count_sql}) temp"
+        else:
+            count_sql = re.sub(
+                r'^\s*SELECT\s+.*?\s+FROM\s',
+                'SELECT COUNT(1) FROM ',
+                sql,
+                flags=re.IGNORECASE | re.DOTALL
+            )
 
         if params['page_num'] < 1:
             params['page_num'] = 1
@@ -173,7 +185,7 @@ class AsyncGenericCRUD:
         )
         return result.rowcount > 0
 
-    async def execute_sql(self, sql: str, params: dict = None, fetch_data: bool = False):
+    async def execute_sql(self, sql: str, params: dict = None, fetch_data: bool = False, v_schema: Any = None):
         if fetch_data:
             result = await self.db.execute(text(sql), params or {})
             sql_lower = sql.strip().lower()
@@ -183,7 +195,10 @@ class AsyncGenericCRUD:
                 return bool(exists_value)
             else:
                 result_data = result.mappings().all()
-                return [dict(row) for row in result_data]
+                if v_schema:
+                    return [v_schema(**dict(row)) for row in result_data]
+                else:
+                    return [dict(row) for row in result_data]
         else:
             await self.db.execute(text(sql), params or {})
             return None
@@ -384,3 +399,15 @@ def crud_getter(model_class: Type):
         crud = AsyncGenericCRUD(user, model_class=model_class, db=db)
         return crud
     return _get_crud
+
+
+def has_group_by(sql_query):
+    # 定义正则模式：
+    # \b : 单词边界，防止匹配到 "MYGROUP BY" 或 "GROUP BYPASS" 这种情况
+    # GROUP\s+BY : 匹配 GROUP 后面跟着一个或多个空白字符（空格、换行、制表符），然后是 BY
+    # re.IGNORECASE : 忽略大小写 (匹配 group by, Group By, GROUP BY 等)
+    pattern = r'\bGROUP\s+BY\b'
+
+    if re.search(pattern, sql_query, re.IGNORECASE):
+        return True
+    return False
