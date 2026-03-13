@@ -11,6 +11,7 @@ from apps.modules.sys.basis.schemas.sys_user import SysUserSchema
 from core.framework.common_schemas import PageVo, BaseSchema
 from core.framework.database import db_getter
 
+
 class AsyncGenericCRUD:
     def __init__(self, user, model_class: Type, db: AsyncSession):
         self.model_class = model_class
@@ -62,8 +63,7 @@ class AsyncGenericCRUD:
         result = await self.db.execute(text(sql), params or {})
         rows = result.fetchall()
         if rows and v_schema:
-            # return [v_schema.model_validate(obj._mapping).model_dump() for obj in rows]
-            return [v_schema(**v_schema.model_validate(obj).model_dump()) for obj in rows]
+            return [v_schema.model_validate(obj) for obj in rows]
         else:
             return [dict(row._mapping) for row in rows]
 
@@ -127,7 +127,7 @@ class AsyncGenericCRUD:
         rows = result.fetchall()
 
         if rows and v_schema:
-            return PageVo(total, [v_schema(**v_schema.model_validate(obj).model_dump()) for obj in rows])
+            return PageVo(total, [v_schema.model_validate(obj) for obj in rows])
         else:
             return PageVo(total, rows if rows else [])
 
@@ -196,7 +196,7 @@ class AsyncGenericCRUD:
             else:
                 result_data = result.mappings().all()
                 if v_schema:
-                    return [v_schema(**dict(row)) for row in result_data]
+                    return [v_schema.model_validate(row) for row in result_data]
                 else:
                     return [dict(row) for row in result_data]
         else:
@@ -209,7 +209,7 @@ class AsyncGenericCRUD:
         )
         if v_schema:
             rows = result.scalars().all()
-            return [v_schema(**v_schema.model_validate(obj).model_dump()) for obj in rows]
+            return [v_schema.model_validate(obj) for obj in rows]
         else:
             return result.scalar_one_or_none()
 
@@ -225,7 +225,7 @@ class AsyncGenericCRUD:
         )
         rows = result.scalars().all()
         if v_schema:
-            return [v_schema(**v_schema.model_validate(obj).model_dump()) for obj in rows]
+            return [v_schema.model_validate(obj) for obj in rows]
         else:
             return rows
 
