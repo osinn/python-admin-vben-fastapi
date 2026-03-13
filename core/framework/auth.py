@@ -63,6 +63,11 @@ class LoginRequestParam(BaseModel):
         description="票据",
         examples=["ticket123"]
     )
+    remember_me: bool = Field(
+        default=False,
+        description="登录是否记住我（一年内免登录）",
+        examples=["false"]
+    )
 
 
 async def deleted_online_user(sub: str):
@@ -107,16 +112,18 @@ class AuthValidation:
         return password_hash.hash(password)
 
     @classmethod
-    async def save_online_user(cls, sub: str, user: dict):
+    async def save_online_user(cls, sub: str, user: dict, token_expire_minutes: int = ACCESS_TOKEN_EXPIRE_MINUTES):
         # redis缓存过期时间,过期时间比jwt 晚30分钟
-        ex_ms = (ACCESS_TOKEN_EXPIRE_MINUTES * 60 * 1000) + 1800000
+        ex_ms = (token_expire_minutes * 60 * 1000) + 1800000
         await cache.set(CACHE_OFFLINE_PREFIX + sub, JSONUtils.dumps(user), ex_ms)
 
     @classmethod
-    async def create_access_token(cls, data: Any):
+    async def create_access_token(cls, remember_me: bool, data: Any):
+        # 如果 remember_me 为true,登录记住我，token保存1年
+        token_expire_minutes = 525600 if remember_me else ACCESS_TOKEN_EXPIRE_MINUTES
         to_encode = data.copy()
         to_encode.pop('user', None)
-        expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        expire = datetime.now(timezone.utc) + timedelta(minutes=token_expire_minutes)
         to_encode.update({"exp": expire.timestamp()})
         encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
         user_dict = data.get("user")
@@ -128,7 +135,18 @@ class AuthValidation:
         return encoded_jwt
 
     @classmethod
+    async def validate_login(cls, request: Request):
+        if hasattr(request, 'headers'):
+            auth_token = request.headers.get("authorization")
+            if auth_token:
+                try:
+                    return await cls.validate_token(auth_token.replace("Bearer ", ""))
+                except Exception:
+                    return None
+        return None
+    @classmethod
     async def validate_token(cls, token: str, ):
+        print("验证token")
         credentials_exception = HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="登录超时，请重新登录",
@@ -299,7 +317,7 @@ class LoginAuth(AuthValidation):
             user_dict["operating_system"] = browser_info["os_name"]
             user_dict["ip"] = ip
 
-            access_token = await AuthValidation.create_access_token(data={"sub": uuid.uuid4().hex, "user": user_dict})
+            access_token = await AuthValidation.create_access_token(login_request_param.remember_me, data={"sub": uuid.uuid4().hex, "user": user_dict})
             sys_http_log.status = 1
             return Token(access_token=access_token, token_type="bearer")
         except Exception as e:
