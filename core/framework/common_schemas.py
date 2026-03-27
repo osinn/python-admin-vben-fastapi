@@ -8,6 +8,8 @@ from typing import List, Optional
 
 from pydantic import BaseModel, Field, ConfigDict
 
+from core.framework.BleachMiddleware import CleanedBaseModel
+
 
 class PageVo(BaseModel):
     total: int = Field(description="总数")
@@ -29,7 +31,7 @@ def snake_to_camel(snake_str: str) -> str:
     components = snake_str.split('_')
     return components[0] + ''.join(x.capitalize() for x in components[1:])
 
-class BaseModelSchema(BaseModel):
+class BaseModelSchema(CleanedBaseModel):
     """
     赋值时驼峰转下划线赋值对象属性，响应数据时将下划线转驼峰
     """

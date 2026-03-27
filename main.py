@@ -9,6 +9,7 @@ from apps.app_router import app_router
 
 from apps.modules.sys.basis.routers.login_auth_router import login_auth_router, ignore_router
 from config import settings
+from core.framework.BleachMiddleware import BleachMiddleware
 from core.framework.auth import AuthAuthorize
 from core.framework.exception import register_exception
 
@@ -48,6 +49,9 @@ if settings.CORS_ORIGIN_ENABLE:
         allow_methods=settings.ALLOW_METHODS,
         allow_headers=settings.ALLOW_HEADERS
     )
+
+# sxx
+app.add_middleware(BleachMiddleware)
 
 if __name__ == '__main__':
     uvicorn.run("main:app", host="0.0.0.0", port=9990, reload=settings.DEBUG)

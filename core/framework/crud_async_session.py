@@ -203,6 +203,11 @@ class AsyncGenericCRUD:
             await self.db.execute(text(sql), params or {})
             return None
 
+    async def execute_count_sql(self, sql: str, params: dict = None):
+        result = await self.db.execute(text(sql), params or {})
+        total = result.scalar_one()
+        return total
+
     async def get(self, id: int, v_schema = None):
         result = await self.db.execute(
             select(self.model_class).where(self.model_class.id == id)
