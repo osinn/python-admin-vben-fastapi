@@ -239,10 +239,11 @@ class AsyncGenericCRUD:
         result = await self.db.execute(stmt)
         return list(result.scalars().all())
 
-    async def create(self, obj_in: BaseModel) -> object:
+    async def create(self, obj_in: BaseModel, extra: dict | None = None) -> object:
         """
         Field(exclude=True) 如果字段不在 ORM模型中，需要在Field中将exclude设置为 True排出此字段，否则不会报错
         :param obj_in:
+        :param extra:
         :return:
         """
         obj_data = obj_in.model_dump()
@@ -250,7 +251,11 @@ class AsyncGenericCRUD:
         user = self.user
         if user and user.get("id", None) is not None:
             obj_data["created_by"] = user.get("id", None)
+        # 上层动态追加字段
+        if extra:
+            obj_data.update(extra)
         db_obj = self.model_class(**obj_data)
+
         self.db.add(db_obj)
         await self.db.flush()
         return db_obj
