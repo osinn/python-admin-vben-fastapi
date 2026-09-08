@@ -4,7 +4,8 @@ from core.framework.common_schemas import BaseSchema, BaseModelSchema
 
 
 class SysPostQueryParam(BaseModelSchema):
-
+    page_num: int = Field(default=1, description="当前页，默认1（从1开始）")
+    page_size: int = Field(default=10, description="每页行数，默认10")
     search_key: Optional[str] = Field(default=None, description="岗位名称/岗位编码")
     status: Optional[int] = Field(default=None, description="状态 1-正常；2-停用")
 
