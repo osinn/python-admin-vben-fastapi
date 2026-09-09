@@ -1,7 +1,7 @@
 from datetime import datetime, date
 from typing import Any, TypeVar, Generic, Union, Dict
 
-from fastapi.responses import ORJSONResponse as Response
+from fastapi.responses import JSONResponse as Response
 from fastapi import status as http_status
 from pydantic import BaseModel
 
