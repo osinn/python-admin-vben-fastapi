@@ -124,8 +124,12 @@ async def lifespan(app: FastAPI):
     # --- startup ---
     async def run_init():
         from core.framework.database_config import session_factory
-        async with session_factory() as db:
-            await scheduler_manager.register_all_tasks(db)
+        try:
+            async with session_factory() as db:
+                await scheduler_manager.register_all_tasks(db)
+        except Exception as e:
+            logger.exception(f"任务调度注册失败，通常是数据库连接/表结构问题: {e}")
+            raise
     await run_init()
     # yield 之前：进入上下文时执行的代码（设置/初始化）
     # yield 之后：退出上下文时执行的代码（清理/关闭）
@@ -174,7 +178,12 @@ async def run_apscheduler(app: FastAPI, status: bool):
     if status:
         print("启动apschedule任务调度")
         logger.info("启动apschedule任务调度")
-        job_scheduler.init_scheduler(APSCHEDULER_DATABASE_URL)
+        try:
+            job_scheduler.init_scheduler(APSCHEDULER_DATABASE_URL)
+        except Exception as e:
+            # 关键：把真实异常（MySQL 连不上/建表失败/驱动不兼容等）打进 loguru 日志后再抛出
+            logger.exception(f"APScheduler 初始化失败，通常是数据库连接问题: {e}")
+            raise
     else:
         try:
             print("关闭apschedule任务调度")
