@@ -1,10 +1,9 @@
 from core.framework.database import Base
 from sqlalchemy.orm import Mapped, mapped_column
 
-from sqlalchemy.dialects.mysql import BIGINT
+from sqlalchemy import BIGINT
 
 from core.utils.Snowflake import snowflake
-
 
 class SysUserPostModel(Base):
     __tablename__ = "tbl_sys_user_post"

@@ -1,7 +1,6 @@
 from core.framework.database import BaseEntity
 from sqlalchemy.orm import Mapped, mapped_column
-from sqlalchemy import Integer, String
-from sqlalchemy.dialects.mysql import BIGINT
+from sqlalchemy import Integer, String, BIGINT
 
 class JobSchedulerModel(BaseEntity):
     __tablename__ = "tbl_job_scheduler"

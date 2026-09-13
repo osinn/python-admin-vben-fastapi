@@ -1,6 +1,6 @@
 from core.framework.database import BaseEntity
 from sqlalchemy.orm import Mapped, mapped_column
-from sqlalchemy import Boolean,Integer, String
+from sqlalchemy import Integer, String
 
 class SysRoleModel(BaseEntity):
     """

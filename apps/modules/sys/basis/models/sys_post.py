@@ -1,13 +1,6 @@
-from typing import Optional
 from core.framework.database import BaseEntity
 from sqlalchemy.orm import Mapped, mapped_column
-from sqlalchemy import Boolean, DateTime, Integer, String
-from sqlalchemy.dialects.mysql import BIGINT
-
-from datetime import datetime
-
-
-
+from sqlalchemy import Integer, String
 
 class SysPostModel(BaseEntity):
     __tablename__ = "tbl_sys_post"

@@ -1,7 +1,7 @@
 from core.framework.database import Base, BaseEntity
 from sqlalchemy.orm import Mapped, mapped_column
 
-from sqlalchemy.dialects.mysql import BIGINT
+from sqlalchemy import BIGINT
 
 from core.utils.Snowflake import snowflake
 

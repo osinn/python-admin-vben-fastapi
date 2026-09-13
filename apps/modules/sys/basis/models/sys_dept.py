@@ -1,7 +1,6 @@
 from core.framework.database import BaseEntity
 from sqlalchemy.orm import Mapped, mapped_column
-from sqlalchemy import Boolean, Integer, String
-from sqlalchemy.dialects.mysql import BIGINT
+from sqlalchemy import BIGINT, Integer, String
 
 class SysDeptModel(BaseEntity):
     __tablename__ = "tbl_sys_dept"

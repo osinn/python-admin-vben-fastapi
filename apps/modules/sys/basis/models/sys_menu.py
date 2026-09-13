@@ -1,11 +1,6 @@
-from typing import Optional
 from core.framework.database import BaseEntity
 from sqlalchemy.orm import Mapped, mapped_column
-from sqlalchemy import Boolean, DateTime, Integer, String, Text
-from sqlalchemy.dialects.mysql import BIGINT
-
-from datetime import datetime
-
+from sqlalchemy import BIGINT, Integer, String, Text
 
 class SysMenuModel(BaseEntity):
     __tablename__ = "tbl_sys_menu"

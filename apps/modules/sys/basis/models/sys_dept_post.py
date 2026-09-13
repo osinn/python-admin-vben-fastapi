@@ -1,7 +1,6 @@
 from core.framework.database import Base
 from sqlalchemy.orm import Mapped, mapped_column
-from sqlalchemy import DateTime, func
-from sqlalchemy.dialects.mysql import BIGINT
+from sqlalchemy import DateTime, func, BIGINT
 
 from datetime import datetime
 

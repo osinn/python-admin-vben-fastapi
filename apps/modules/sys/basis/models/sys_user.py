@@ -4,7 +4,6 @@ from sqlalchemy import Boolean, DateTime, Integer, String, BIGINT
 
 from datetime import datetime
 
-
 class SysUserModel(BaseEntity):
     """
     用户表

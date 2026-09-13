@@ -1,6 +1,6 @@
 from core.framework.database import BaseEntity
 from sqlalchemy.orm import Mapped, mapped_column
-from sqlalchemy import Boolean, DateTime, String, Integer
+from sqlalchemy import String, Integer
 
 
 class SysConfigModel(BaseEntity):
